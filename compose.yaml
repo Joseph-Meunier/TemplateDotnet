@@ -1,0 +1,13 @@
+﻿services:
+  template-back-api:
+    image: template-back-api
+    build:
+      context: .
+      dockerfile: Template-Back-API/Dockerfile
+
+  template-back.api:
+    image: template-back.api
+    build:
+      context: .
+      dockerfile: Template-Back.API/Dockerfile
+
