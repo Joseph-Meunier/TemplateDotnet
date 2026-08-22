@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Mvc.Testing;
+
 namespace Template.Api.IntegrationTests.Infrastructure;
 
-public class ApiFactory
+public sealed class ApiFactory
+    : WebApplicationFactory<Program>
 {
-    
 }

@@ -1,6 +1,5 @@
 namespace Template.Api.IntegrationTests.Sample;
 
-public class EchoResponseDTO
-{
-    
-}
+public sealed record EchoResponse(
+    string Message,
+    DateTimeOffset ProcessedAt);

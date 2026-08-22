@@ -1,6 +1,6 @@
 namespace Template.Shared.Errors;
 
-public class ForbiddenException
-{
-    
-}
+public sealed class ForbiddenException(
+    string code,
+    string message)
+    : AppException(code, message);
