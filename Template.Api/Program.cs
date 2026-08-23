@@ -13,7 +13,7 @@ builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 // Add SampleModule services and endpoints
-builder.Services.AddSampleModule();
+builder.Services.AddSampleModule(builder.Configuration);
 
 var app = builder.Build();
 
