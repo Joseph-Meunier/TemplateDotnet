@@ -4,7 +4,7 @@ using Template.Modules.Blog.Domain;
 
 namespace Template.Modules.Blog.Data.Configurations;
 
-public sealed class BlogItemConfiguration
+public sealed class BlogConfiguration
     : IEntityTypeConfiguration<Post>
 {
     public void Configure(
