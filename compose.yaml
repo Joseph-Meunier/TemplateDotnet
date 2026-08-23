@@ -1,13 +1,32 @@
 ﻿services:
-  template-back-api:
-    image: template-back-api
+
+  template-api:
+    image: template-api
     build:
       context: .
-      dockerfile: Template-Back-API/Dockerfile
+      dockerfile: src/Template.Api/Dockerfile
 
-  template-back.api:
-    image: template-back.api
-    build:
-      context: .
-      dockerfile: Template-Back.API/Dockerfile
+    environment:
+      ConnectionStrings__SampleDatabase: >
+        Host=postgres;
+        Port=5432;
+        Database=${POSTGRES_DB};
+        Username=${POSTGRES_USER};
+        Password=${POSTGRES_PASSWORD}
 
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:${POSTGRES_VERSION:-17}
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
