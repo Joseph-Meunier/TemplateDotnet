@@ -1,6 +1,6 @@
 using Scalar.AspNetCore;
-using Template.Modules.Sample;
 using Template.Api.Errors;
+using Template.Modules.Users;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,8 +16,8 @@ builder.Services.AddProblemDetails();
 // Add global exception handler
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
-// Add SampleModule services and endpoints
-builder.Services.AddSampleModule(builder.Configuration);
+// Add UserModule services
+builder.Services.AddUsersModule(builder.Configuration);
 
 var app = builder.Build();
 
@@ -27,8 +27,8 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
-// Map SampleModule endpoints
-app.MapSampleModule();
+// Map UserModule endpoints
+app.MapUsersModule();
 
 // Use ProblemDetails middleware to handle exceptions and return standardized error responses
 app.UseExceptionHandler();

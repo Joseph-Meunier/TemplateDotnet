@@ -24,7 +24,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Template.Modules.Sample\Template.Modules.Sample.csproj" />
+      <ProjectReference Include="..\Template.Modules.Users\Template.Modules.Users.csproj" />
       <ProjectReference Include="..\Template.Shared\Template.Shared.csproj" />
     </ItemGroup>
 
