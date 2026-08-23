@@ -23,6 +23,7 @@ public static class DependencyInjection
 
         services.AddScoped<Features.GetSample.Handler>();
         services.AddScoped<Features.Echo.Handler>();
+        services.AddScoped<Features.CreateSampleItem.Handler>();
 
         return services;
     }

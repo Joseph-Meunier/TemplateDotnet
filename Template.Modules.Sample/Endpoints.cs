@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
+using Template.Modules.Sample.Features.CreateSampleItem;
 using Template.Modules.Sample.Features.Echo;
 using Template.Modules.Sample.Features.ErrorSample;
 using Template.Modules.Sample.Features.GetSample;
@@ -13,6 +14,7 @@ public static class Endpoints
     {
         endpoints.MapGetSampleEndpoint();
         endpoints.MapEchoEndpoint();
+        endpoints.MapCreateSampleItemEndpoint();
         
         endpoints.MapErrorSampleEndpoint();
         

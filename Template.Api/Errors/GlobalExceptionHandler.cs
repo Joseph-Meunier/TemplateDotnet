@@ -30,7 +30,6 @@ public sealed class GlobalExceptionHandler(
             
             BadRequestException =>
                 (StatusCodes.Status400BadRequest, "Bad Request"),
-
             _ =>
                 (StatusCodes.Status500InternalServerError,
                     "Internal server error")
