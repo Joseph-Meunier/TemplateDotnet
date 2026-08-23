@@ -5,4 +5,5 @@ public sealed record Request(
     string Content,
     DateOnly StartDate,
     string? HeroImage,
-    int ReadingTimeMinutes);
+    int ReadingTimeMinutes,
+    IReadOnlyCollection<string> Tags);

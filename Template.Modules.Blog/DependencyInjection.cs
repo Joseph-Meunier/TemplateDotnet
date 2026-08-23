@@ -15,7 +15,13 @@ public static class DependencyInjection
         services.AddDbContext<BlogDbContext>(options =>
         {
             options.UseNpgsql(
-                configuration.GetConnectionString("BlogDatabase"));
+                configuration.GetConnectionString("BlogDatabase"),
+                npgsql =>
+                {
+                    npgsql.MigrationsHistoryTable(
+                        "__EFMigrationsHistory",
+                        "blog");
+                });
         });
 
         services.AddValidatorsFromAssemblyContaining<ModuleMarker>();

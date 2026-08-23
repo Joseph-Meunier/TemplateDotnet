@@ -9,9 +9,13 @@ public sealed class BlogDbContext(
 {
     public DbSet<Post> Posts => Set<Post>();
 
+    public DbSet<Tag> Tags => Set<Tag>();
+
     protected override void OnModelCreating(
         ModelBuilder modelBuilder)
     {
+        modelBuilder.HasDefaultSchema("blog");
+
         modelBuilder.ApplyConfigurationsFromAssembly(
             typeof(BlogDbContext).Assembly);
     }

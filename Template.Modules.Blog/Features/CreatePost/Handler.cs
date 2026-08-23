@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Template.Modules.Blog.Data;
 using Template.Modules.Blog.Domain;
 using Template.Modules.Users.Contracts;
@@ -24,6 +25,25 @@ public sealed class Handler(
                 "The requested author does not exist.");
         }
 
+        var normalizedTagNames = request.Tags
+            .Select(x => x.Trim().ToLowerInvariant())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct()
+            .ToArray();
+
+        var existingTags = await dbContext.Tags
+            .Where(x => normalizedTagNames.Contains(x.Name))
+            .ToListAsync(cancellationToken);
+
+        var existingTagNames = existingTags
+            .Select(x => x.Name)
+            .ToHashSet();
+
+        var newTags = normalizedTagNames
+            .Where(x => !existingTagNames.Contains(x))
+            .Select(x => new Tag(x))
+            .ToList();
+
         var post = new Post(
             request.AuthorUserId,
             request.Title,
@@ -32,6 +52,16 @@ public sealed class Handler(
             request.StartDate,
             request.HeroImage,
             request.ReadingTimeMinutes);
+
+        foreach (var tag in existingTags)
+        {
+            post.Tags.Add(tag);
+        }
+
+        foreach (var tag in newTags)
+        {
+            post.Tags.Add(tag);
+        }
 
         dbContext.Posts.Add(post);
 

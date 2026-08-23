@@ -16,7 +16,13 @@ public static class DependencyInjection
         services.AddDbContext<UsersDbContext>(options =>
         {
             options.UseNpgsql(
-                configuration.GetConnectionString("UsersDatabase"));
+                configuration.GetConnectionString("UsersDatabase"),
+                npgsql =>
+                {
+                    npgsql.MigrationsHistoryTable(
+                        "__EFMigrationsHistory",
+                        "users");
+                });
         });
         
         services.AddScoped<IUserReader, UserReader>();

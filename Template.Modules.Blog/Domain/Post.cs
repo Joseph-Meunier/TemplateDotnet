@@ -23,6 +23,8 @@ public sealed class Post
     public bool IsPublished { get; private set; }
 
     public int ReadingTimeMinutes { get; private set; }
+    
+    public ICollection<Tag> Tags { get; private set; } = [];
 
     private Post()
     {

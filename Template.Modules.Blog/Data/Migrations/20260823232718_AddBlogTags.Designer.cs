@@ -12,14 +12,15 @@ using Template.Modules.Blog.Data;
 namespace Template.Modules.Blog.Data.Migrations
 {
     [DbContext(typeof(BlogDbContext))]
-    [Migration("20260823225115_InitialBlog")]
-    partial class InitialBlog
+    [Migration("20260823232718_AddBlogTags")]
+    partial class AddBlogTags
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("blog")
                 .HasAnnotation("ProductVersion", "10.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
@@ -68,7 +69,56 @@ namespace Template.Modules.Blog.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("posts", (string)null);
+                    b.ToTable("posts", "blog");
+                });
+
+            modelBuilder.Entity("Template.Modules.Blog.Domain.Tag", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("tags", "blog");
+                });
+
+            modelBuilder.Entity("post_tags", b =>
+                {
+                    b.Property<Guid>("PostsId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TagsId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("PostsId", "TagsId");
+
+                    b.HasIndex("TagsId");
+
+                    b.ToTable("post_tags", "blog");
+                });
+
+            modelBuilder.Entity("post_tags", b =>
+                {
+                    b.HasOne("Template.Modules.Blog.Domain.Post", null)
+                        .WithMany()
+                        .HasForeignKey("PostsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Template.Modules.Blog.Domain.Tag", null)
+                        .WithMany()
+                        .HasForeignKey("TagsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

@@ -12,14 +12,15 @@ using Template.Modules.Users.Data;
 namespace Template.Modules.Users.Data.Migrations
 {
     [DbContext(typeof(UsersDbContext))]
-    [Migration("20260823174714_Initial")]
-    partial class Initial
+    [Migration("20260823230128_InitialUsers")]
+    partial class InitialUsers
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("users")
                 .HasAnnotation("ProductVersion", "10.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
@@ -49,7 +50,7 @@ namespace Template.Modules.Users.Data.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("users", (string)null);
+                    b.ToTable("users", "users");
                 });
 #pragma warning restore 612, 618
         }

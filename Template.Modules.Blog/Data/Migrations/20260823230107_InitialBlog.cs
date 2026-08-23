@@ -11,8 +11,12 @@ namespace Template.Modules.Blog.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.EnsureSchema(
+                name: "blog");
+
             migrationBuilder.CreateTable(
                 name: "posts",
+                schema: "blog",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -37,7 +41,8 @@ namespace Template.Modules.Blog.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "posts");
+                name: "posts",
+                schema: "blog");
         }
     }
 }

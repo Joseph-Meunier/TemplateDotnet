@@ -26,5 +26,16 @@ public sealed class Validator : AbstractValidator<Request>
         RuleFor(x => x.HeroImage)
             .MaximumLength(500)
             .When(x => !string.IsNullOrWhiteSpace(x.HeroImage));
+        
+        RuleFor(x => x.Tags)
+            .NotNull();
+
+        RuleForEach(x => x.Tags)
+            .NotEmpty()
+            .MaximumLength(100);
+        
+        RuleFor(x => x.Tags)
+            .Must(tags => tags.Count <= 20)
+            .WithMessage("A post cannot have more than 20 tags.");
     }
 }

@@ -27,6 +27,7 @@
 
     <ItemGroup>
       <Folder Include="Contracts\" />
+      <Folder Include="Data\Migrations\" />
     </ItemGroup>
 
 </Project>

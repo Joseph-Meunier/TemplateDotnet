@@ -6,13 +6,17 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Template.Modules.Users.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class Initial : Migration
+    public partial class InitialUsers : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.EnsureSchema(
+                name: "users");
+
             migrationBuilder.CreateTable(
                 name: "users",
+                schema: "users",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -27,6 +31,7 @@ namespace Template.Modules.Users.Data.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "IX_users_Email",
+                schema: "users",
                 table: "users",
                 column: "Email",
                 unique: true);
@@ -36,7 +41,8 @@ namespace Template.Modules.Users.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "users");
+                name: "users",
+                schema: "users");
         }
     }
 }

@@ -30,5 +30,10 @@ public sealed class PostConfiguration
 
         builder.Property(x => x.AuthorUserId)
             .IsRequired();
+        
+        builder
+            .HasMany(x => x.Tags)
+            .WithMany(x => x.Posts)
+            .UsingEntity("post_tags");
     }
 }
