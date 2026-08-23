@@ -4,7 +4,11 @@ using Template.Api.Errors;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.CreateSchemaReferenceId = type =>
+        type.Type.FullName?.Replace("+", ".");
+});
 
 // Add ProblemDetails middleware for standardized error responses
 builder.Services.AddProblemDetails();
