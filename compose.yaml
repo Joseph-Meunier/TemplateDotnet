@@ -5,14 +5,10 @@
     build:
       context: .
       dockerfile: src/Template.Api/Dockerfile
-
+      
     environment:
-      ConnectionStrings__SampleDatabase: >
-        Host=postgres;
-        Port=5432;
-        Database=${POSTGRES_DB};
-        Username=${POSTGRES_USER};
-        Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__UsersDatabase: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__BlogDatabase: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
 
     depends_on:
       - postgres
