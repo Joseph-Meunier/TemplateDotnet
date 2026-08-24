@@ -68,4 +68,21 @@ public sealed class Post
         PublishedAt = publicationDate;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
+    
+    public void Update(
+        string title,
+        string description,
+        string content,
+        DateOnly startDate,
+        string? heroImage,
+        int readingTimeMinutes)
+    {
+        Title = title.Trim();
+        Description = description.Trim();
+        Content = content;
+        StartDate = startDate;
+        HeroImage = heroImage;
+        ReadingTimeMinutes = readingTimeMinutes;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
 }
