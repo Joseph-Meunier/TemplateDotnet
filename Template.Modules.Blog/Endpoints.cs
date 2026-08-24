@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Routing;
 using Template.Modules.Blog.Features.CreatePost;
+using Template.Modules.Blog.Features.GetPost;
+using Template.Modules.Blog.Features.PublishPost;
 
 namespace Template.Modules.Blog;
 
@@ -9,7 +11,9 @@ public static class Endpoints
         this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapCreatePostEndpoint();
-
+        endpoints.MapGetPostEndpoint();
+        endpoints.MapPublishPostEndpoint();
+        
         return endpoints;
     }
 }

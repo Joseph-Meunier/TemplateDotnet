@@ -27,6 +27,8 @@ public static class DependencyInjection
         services.AddValidatorsFromAssemblyContaining<ModuleMarker>();
 
         services.AddScoped<Features.CreatePost.Handler>();
+        services.AddScoped<Features.GetPost.Handler>();
+        services.AddScoped<Features.PublishPost.Handler>();
 
         return services;
     }

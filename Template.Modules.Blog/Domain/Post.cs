@@ -56,4 +56,16 @@ public sealed class Post
 
         UpdatedAt = DateTimeOffset.UtcNow;
     }
+    
+    public void Publish(DateOnly publicationDate)
+    {
+        if (IsPublished)
+        {
+            return;
+        }
+
+        IsPublished = true;
+        PublishedAt = publicationDate;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
 }
