@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Routing;
 using Template.Modules.Blog.Features.CreatePost;
 using Template.Modules.Blog.Features.GetPost;
+using Template.Modules.Blog.Features.GetPublishedPosts;
 using Template.Modules.Blog.Features.PublishPost;
 using Template.Modules.Blog.Features.UpdatePost;
 
@@ -15,6 +16,7 @@ public static class Endpoints
         endpoints.MapGetPostEndpoint();
         endpoints.MapPublishPostEndpoint();
         endpoints.MapUpdatePostEndpoint();
+        endpoints.MapGetPublishedPostsEndpoint();
         
         return endpoints;
     }

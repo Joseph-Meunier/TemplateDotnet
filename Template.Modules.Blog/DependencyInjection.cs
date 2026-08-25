@@ -30,6 +30,7 @@ public static class DependencyInjection
         services.AddScoped<Features.GetPost.Handler>();
         services.AddScoped<Features.PublishPost.Handler>();
         services.AddScoped<Features.UpdatePost.Handler>();
+        services.AddScoped<Features.GetPublishedPosts.Handler>();
 
         return services;
     }
