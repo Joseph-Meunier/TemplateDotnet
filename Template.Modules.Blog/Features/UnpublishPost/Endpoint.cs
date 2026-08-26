@@ -2,15 +2,15 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
-namespace Template.Modules.Blog.Features.PublishPost;
+namespace Template.Modules.Blog.Features.UnpublishPost;
 
 public static class Endpoint
 {
-    public static IEndpointRouteBuilder MapPublishPostEndpoint(
+    public static IEndpointRouteBuilder MapUnpublishPostEndpoint(
         this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapPost(
-                "/blog/posts/{id:guid}/publish",
+                "/blog/posts/{id:guid}/unpublish",
                 async (
                     Guid id,
                     Handler handler,
@@ -22,10 +22,10 @@ public static class Endpoint
 
                     return Results.Ok(response);
                 })
-            .RequireAuthorization()
             .Produces<Response>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status401Unauthorized);;
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .RequireAuthorization();
 
         return endpoints;
     }

@@ -3,7 +3,7 @@ using Template.Modules.Blog.Authorization;
 using Template.Modules.Blog.Data;
 using Template.Shared.Errors;
 
-namespace Template.Modules.Blog.Features.PublishPost;
+namespace Template.Modules.Blog.Features.UnpublishPost;
 
 public sealed class Handler(
     BlogDbContext dbContext,
@@ -29,8 +29,7 @@ public sealed class Handler(
             post,
             cancellationToken);
 
-        post.Publish(
-            DateOnly.FromDateTime(DateTime.UtcNow));
+        post.Unpublish();
 
         await dbContext.SaveChangesAsync(
             cancellationToken);
