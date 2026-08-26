@@ -26,7 +26,8 @@ public static class Endpoint
             .AddEndpointFilter<ValidationFilter<Request>>()
             .Produces<Response>(StatusCodes.Status201Created)
             .ProducesValidationProblem()
-            .ProducesProblem(StatusCodes.Status409Conflict);
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .RequireAuthorization();
 
         return endpoints;
     }
