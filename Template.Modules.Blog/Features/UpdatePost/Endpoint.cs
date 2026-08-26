@@ -11,7 +11,7 @@ public static class Endpoint
         this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapPut(
-                "/blog/post/{id:guid}",
+                "/blog/posts/{id:guid}",
                 async (
                     Guid id,
                     Request request,
@@ -29,6 +29,7 @@ public static class Endpoint
             .Produces<Response>(StatusCodes.Status200OK)
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 

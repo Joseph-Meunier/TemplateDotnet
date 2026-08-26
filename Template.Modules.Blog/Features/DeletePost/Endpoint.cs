@@ -10,7 +10,7 @@ public static class Endpoint
     public static IEndpointRouteBuilder MapDeletePostEndpoint(
         this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapDelete("/blog/post/{id:guid}", async (
+        endpoints.MapDelete("/blog/posts/{id:guid}", async (
                 Guid id,
                 Handler handler,
                 CancellationToken cancellationToken) =>

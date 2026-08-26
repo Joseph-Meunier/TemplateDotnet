@@ -8,7 +8,7 @@ namespace Template.Modules.Users.Features.AddUserRole;
 
 public static class Endpoint
 {
-    public static IEndpointRouteBuilder MapCreateUserEndpoint(
+    public static IEndpointRouteBuilder MapAddUserRole(
         this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapPost("/users/{id:guid}/roles/{role}", async (

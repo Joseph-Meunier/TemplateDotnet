@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Template.Modules.Users.Authorization;
 using Template.Modules.Users.Contracts;
 using Template.Modules.Users.Data;
-using Template.Modules.Users.Domain;
 using Template.Shared.Errors;
 
 namespace Template.Modules.Users.Features.AddUserRole;

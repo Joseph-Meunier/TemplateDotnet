@@ -8,7 +8,7 @@ namespace Template.Modules.Users.Features.DeleteUserRole;
 
 public static class Endpoint
 {
-    public static IEndpointRouteBuilder MapCreateUserEndpoint(
+    public static IEndpointRouteBuilder MapDeleteUserRoleEndpoint(
         this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapDelete("/users/{id:guid}/roles/{role}", async (

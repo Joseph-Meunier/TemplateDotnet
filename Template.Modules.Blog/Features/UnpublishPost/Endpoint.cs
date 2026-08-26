@@ -23,6 +23,7 @@ public static class Endpoint
                     return Results.Ok(response);
                 })
             .Produces<Response>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .RequireAuthorization();

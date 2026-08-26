@@ -10,7 +10,7 @@ public static class Endpoint
     public static IEndpointRouteBuilder MapCreatePostEndpoint(
         this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapPost("/blog/post", async (
+        endpoints.MapPost("/blog/posts", async (
                 Request request,
                 Handler handler,
                 CancellationToken cancellationToken) =>
