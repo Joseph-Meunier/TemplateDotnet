@@ -5,9 +5,12 @@ using Template.Shared.Errors;
 
 namespace Template.Modules.Users.Authorization;
 
-public sealed class UsersAuthorizationService(ICurrentUser currentUser, IUserReader userReader)
+public sealed class UsersAuthorizationService(
+        ICurrentUser currentUser,
+        IUserReader userReader
+)
 {
-        public async Task RequireAdminAsync(
+        private async Task<UserSummary> GetCurrentUserAsync(
                 CancellationToken cancellationToken)
         {
                 var user = await userReader.GetByIdentityIdAsync(
@@ -20,6 +23,15 @@ public sealed class UsersAuthorizationService(ICurrentUser currentUser, IUserRea
                                 "users.profile_required",
                                 "An application user profile is required.");
                 }
+
+                return user;
+        }
+
+        public async Task RequireAdminAsync(
+                CancellationToken cancellationToken)
+        {
+                var user = await GetCurrentUserAsync(
+                        cancellationToken);
 
                 if (!user.Roles.Contains(UserRole.Admin))
                 {
