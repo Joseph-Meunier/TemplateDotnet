@@ -1,11 +1,16 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Testcontainers.PostgreSql;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Template.Api.IntegrationTests.Authentication;
 using Template.Modules.Blog.Data;
+using Template.Modules.Users.Contracts;
 using Template.Modules.Users.Data;
+using Template.Modules.Users.Domain;
 
 namespace Template.Api.IntegrationTests.Infrastructure;
 
@@ -40,27 +45,80 @@ public sealed class ApiFactory
     }
     public new async Task DisposeAsync()
     {
+        await base.DisposeAsync();
         await _postgres.DisposeAsync();
+    }
+    
+    public async Task<User> CreateUserAsync(
+        string identityId,
+        params UserRole[] roles)
+    {
+        using var scope = Services.CreateScope();
+
+        var dbContext =
+            scope.ServiceProvider
+                .GetRequiredService<UsersDbContext>();
+
+        var user = new User(
+            identityId,
+            $"{Guid.NewGuid()}@example.com",
+            "Integration Test User");
+
+        foreach (var role in roles)
+        {
+            user.AddRole(role);
+        }
+
+        dbContext.Users.Add(user);
+
+        await dbContext.SaveChangesAsync();
+
+        return user;
     }
 
     protected override void ConfigureWebHost(
         IWebHostBuilder builder)
     {
-        builder.ConfigureAppConfiguration(
-            (_, configuration) =>
-            {
-                var connectionString =
-                    _postgres.GetConnectionString();
+        builder.UseEnvironment("Testing");
 
-                configuration.AddInMemoryCollection(
-                    new Dictionary<string, string?>
-                    {
-                        ["ConnectionStrings:UsersDatabase"] =
-                            connectionString,
+        builder.ConfigureAppConfiguration((_, configuration) =>
+        {
+            configuration.AddInMemoryCollection(
+                new Dictionary<string, string?>
+                {
+                    ["Authentication:Authority"] =
+                        "https://test.invalid",
 
-                        ["ConnectionStrings:BlogDatabase"] =
-                            connectionString
-                    });
-            });
+                    ["Authentication:Audience"] =
+                        "template-api",
+
+                    ["ConnectionStrings:UsersDatabase"] =
+                        _postgres.GetConnectionString(),
+
+                    ["ConnectionStrings:BlogDatabase"] =
+                        _postgres.GetConnectionString()
+                });
+        });
+
+        builder.ConfigureTestServices(services =>
+        {
+            services
+                .AddAuthentication(options =>
+                {
+                    options.DefaultScheme =
+                        TestAuthHandler.Scheme;
+
+                    options.DefaultAuthenticateScheme =
+                        TestAuthHandler.Scheme;
+
+                    options.DefaultChallengeScheme =
+                        TestAuthHandler.Scheme;
+                })
+                .AddScheme<
+                    AuthenticationSchemeOptions,
+                    TestAuthHandler>(
+                    TestAuthHandler.Scheme,
+                    _ => { });
+        });
     }
 }

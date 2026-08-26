@@ -17,13 +17,6 @@ public sealed class Handler(
         var author = await authorizationService.RequireCreatorAsync(
             cancellationToken);
 
-        if (author is null)
-        {
-            throw new NotFoundException(
-                "users.current_user_not_found",
-                "The authenticated user has no application profile.");
-        }
-
         var normalizedTagNames = request.Tags
             .Select(x => x.Trim().ToLowerInvariant())
             .Where(x => !string.IsNullOrWhiteSpace(x))

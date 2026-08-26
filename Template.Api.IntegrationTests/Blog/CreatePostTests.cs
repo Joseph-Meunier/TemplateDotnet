@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Template.Api.IntegrationTests.Infrastructure;
+using Template.Modules.Users.Contracts;
 
 namespace Template.Api.IntegrationTests.Blog;
 
@@ -11,37 +12,106 @@ public sealed class CreatePostTests(
     private readonly HttpClient _client =
         factory.CreateClient();
 
-    private sealed record UserResponse(
-        Guid Id,
-        string Email,
-        string DisplayName,
-        DateTimeOffset CreatedAt);
+    [Fact]
+    public async Task CreatePost_WithoutAuthentication_ReturnsUnauthorized()
+    {
+        var request = CreateValidRequest();
+
+        var response = await _client.PostAsJsonAsync(
+            "/blog/post",
+            request);
+
+        Assert.Equal(
+            HttpStatusCode.Unauthorized,
+            response.StatusCode);
+    }
 
     [Fact]
-    public async Task CreatePost_WithExistingAuthor_ReturnsCreated()
+    public async Task CreatePost_WithAuthenticatedUserWithoutCreatorRole_ReturnsForbidden()
     {
-        var userRequest = new
+        var identityId = $"user-{Guid.NewGuid()}";
+
+        await factory.CreateUserAsync(
+            identityId: identityId);
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            "/blog/post")
         {
-            email = $"author-{Guid.NewGuid()}@example.com",
-            displayName = "Author"
+            Content = JsonContent.Create(
+                CreateValidRequest())
         };
 
-        var userHttpResponse =
-            await _client.PostAsJsonAsync(
-                "/users",
-                userRequest);
+        request.Headers.Add(
+            "X-Test-Identity",
+            identityId);
 
-        userHttpResponse.EnsureSuccessStatusCode();
+        var response =
+            await _client.SendAsync(request);
 
-        var user =
-            await userHttpResponse.Content
-                .ReadFromJsonAsync<UserResponse>();
+        Assert.Equal(
+            HttpStatusCode.Forbidden,
+            response.StatusCode);
+    }
 
-        Assert.NotNull(user);
+    [Fact]
+    public async Task CreatePost_WithCreatorRole_ReturnsCreated()
+    {
+        var identityId = $"creator-{Guid.NewGuid()}";
 
-        var postRequest = new
+        await factory.CreateUserAsync(
+            identityId: identityId,
+            roles: [UserRole.Creator]);
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            "/blog/post")
         {
-            authorUserId = user.Id,
+            Content = JsonContent.Create(
+                CreateValidRequest())
+        };
+
+        request.Headers.Add(
+            "X-Test-Identity",
+            identityId);
+
+        var response =
+            await _client.SendAsync(request);
+
+        Assert.Equal(
+            HttpStatusCode.Created,
+            response.StatusCode);
+    }
+    
+    [Fact]
+    public async Task CreatePost_WithoutApplicationProfile_ReturnsForbidden()
+    {
+        var identityId = $"unknown-{Guid.NewGuid()}";
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            "/blog/post")
+        {
+            Content = JsonContent.Create(
+                CreateValidRequest())
+        };
+
+        request.Headers.Add(
+            "X-Test-Identity",
+            identityId);
+
+        var response =
+            await _client.SendAsync(request);
+
+        Assert.Equal(
+            HttpStatusCode.Forbidden,
+            response.StatusCode);
+    }
+
+    private static object CreateValidRequest()
+    {
+        return new
+        {
             title = "Test post",
             description = "Test description",
             content = "# Test",
@@ -54,42 +124,5 @@ public sealed class CreatePostTests(
                 "testcontainers"
             }
         };
-
-        var response =
-            await _client.PostAsJsonAsync(
-                "/blog/post",
-                postRequest);
-
-        Assert.Equal(
-            HttpStatusCode.Created,
-            response.StatusCode);
-    }
-    
-    [Fact]
-    public async Task CreatePost_WithUnknownAuthor_ReturnsNotFound()
-    {
-        var request = new
-        {
-            authorUserId = Guid.NewGuid(),
-            title = "Test post",
-            description = "Test description",
-            content = "# Test",
-            startDate = "2026-08-24",
-            heroImage = (string?)null,
-            readingTimeMinutes = 5,
-            tags = new[]
-            {
-                "dotnet"
-            }
-        };
-
-        var response =
-            await _client.PostAsJsonAsync(
-                "/blog/post",
-                request);
-
-        Assert.Equal(
-            HttpStatusCode.NotFound,
-            response.StatusCode);
     }
 }

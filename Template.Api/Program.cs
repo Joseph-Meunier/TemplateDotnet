@@ -76,8 +76,10 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 // Bootstrap the admin user if we dont have one yet. This is useful for development and testing purposes.
-using (var scope = app.Services.CreateScope())
+if (!app.Environment.IsEnvironment("Testing"))
 {
+    using var scope = app.Services.CreateScope();
+
     var bootstrapAdmin =
         scope.ServiceProvider
             .GetRequiredService<BootstrapAdminService>();

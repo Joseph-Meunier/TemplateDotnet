@@ -12,7 +12,7 @@ public static class DependencyInjection
     {
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, CurrentUser>();
-        
+
         services
             .AddOptions<AuthenticationOptions>()
             .Bind(
@@ -21,31 +21,31 @@ public static class DependencyInjection
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
-        var authenticationOptions =
-            configuration
-                .GetSection(AuthenticationOptions.SectionName)
-                .Get<AuthenticationOptions>()
-            ?? throw new InvalidOperationException(
-                "Authentication configuration is missing.");
-
         services
             .AddAuthentication(
                 JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options =>
-            {
-                options.Authority =
-                    authenticationOptions.Authority;
+            .AddJwtBearer();
 
-                options.Audience =
-                    authenticationOptions.Audience;
+        services
+            .AddOptions<JwtBearerOptions>(
+                JwtBearerDefaults.AuthenticationScheme)
+            .Configure<IOptions<AuthenticationOptions>>(
+                (jwtOptions, authenticationOptions) =>
+                {
+                    var settings =
+                        authenticationOptions.Value;
 
-                options.RequireHttpsMetadata = true;
+                    jwtOptions.Authority =
+                        settings.Authority;
 
-                options.MapInboundClaims = false;
-            });
+                    jwtOptions.Audience =
+                        settings.Audience;
+
+                    jwtOptions.RequireHttpsMetadata = true;
+                    jwtOptions.MapInboundClaims = false;
+                });
 
         services.AddAuthorization();
-        
 
         return services;
     }
