@@ -59,6 +59,13 @@ public sealed class Handler(
             .Select(x => new Tag(x))
             .ToList();
 
+        if (newTags.Count > 0)
+        {
+            dbContext.Tags.AddRange(newTags);
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
         post.Tags.Clear();
 
         foreach (var tag in existingTags)

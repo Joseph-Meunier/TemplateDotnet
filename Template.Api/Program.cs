@@ -1,8 +1,6 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 using Template.Api.Authentication;
-using Template.Api.Errors;
 using Template.Modules.Users;
 using Template.Modules.Blog;
 using Template.Modules.Blog.Bootstrap;

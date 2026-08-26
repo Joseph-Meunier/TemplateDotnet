@@ -2,11 +2,10 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Template.Shared.Errors;
 
-namespace Template.Api.Errors;
-
 public sealed class GlobalExceptionHandler(
     IProblemDetailsService problemDetailsService,
-    ILogger<GlobalExceptionHandler> logger)
+    ILogger<GlobalExceptionHandler> logger,
+    IWebHostEnvironment environment)
     : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(
@@ -24,12 +23,13 @@ public sealed class GlobalExceptionHandler(
 
             ForbiddenException =>
                 (StatusCodes.Status403Forbidden, "Forbidden"),
-            
+
             UnauthorizedException =>
                 (StatusCodes.Status401Unauthorized, "Unauthorized"),
-            
+
             BadRequestException =>
                 (StatusCodes.Status400BadRequest, "Bad Request"),
+
             _ =>
                 (StatusCodes.Status500InternalServerError,
                     "Internal server error")
@@ -48,9 +48,16 @@ public sealed class GlobalExceptionHandler(
         {
             Status = statusCode,
             Title = title,
-            Detail = exception is AppException
-                ? exception.Message
-                : null
+
+            Detail = exception switch
+            {
+                AppException => exception.Message,
+
+                _ when environment.IsEnvironment("Testing")
+                    => exception.ToString(),
+
+                _ => null
+            }
         };
 
         problemDetails.Extensions["code"] =

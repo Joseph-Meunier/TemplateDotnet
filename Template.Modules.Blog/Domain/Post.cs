@@ -40,7 +40,6 @@ public sealed class Post
         int readingTimeMinutes)
     {
         Id = Guid.NewGuid();
-
         AuthorUserId = authorUserId;
         Title = title.Trim();
         Description = description.Trim();
