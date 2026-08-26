@@ -1,20 +1,21 @@
 using System.Net;
 using System.Net.Http.Json;
 using Template.Api.IntegrationTests.Infrastructure;
-using Template.Modules.Blog.Domain;
 using Template.Modules.Users.Contracts;
 
 namespace Template.Api.IntegrationTests.Blog;
 
-public sealed class UpdatePostTests(
+public class DeletePostTests(
     ApiFactory factory)
     : IClassFixture<ApiFactory>
 {
     private readonly HttpClient _client =
         factory.CreateClient();
+   
 
+    // - Creator propriétaire -> 204
     [Fact]
-    public async Task UpdatePost_WithAuthenticatedUserWithCreatorRoleAndIsOwner_ReturnsOk()
+    public async Task DeletePost_WithAuthenticatedUserWithCreatorRoleAndIsOwner_ReturnsNoContent()
     {
         var identityId = $"creator-{Guid.NewGuid()}";
 
@@ -40,47 +41,41 @@ public sealed class UpdatePostTests(
         Assert.Equal(
             HttpStatusCode.Created,
             response.StatusCode);
-        
+
         var createdPost =
             await response.Content
                 .ReadFromJsonAsync<CreatePostResponse>();
 
-        // Update the post as the owner
-        using var updateRequest = new HttpRequestMessage(
-            HttpMethod.Put,
-            $"/blog/posts/{createdPost.Id}")
-        {
-            Content = JsonContent.Create(
-                UpdateValidRequest()
-            )
-        };
+        // Delete the post as the owner
+        using var deleteRequest = new HttpRequestMessage(
+            HttpMethod.Delete,
+            $"/blog/posts/{createdPost.Id}");
 
-        updateRequest.Headers.Add(
+        deleteRequest.Headers.Add(
             "X-Test-Identity",
             identityId);
 
-        var updateResponse =
-            await _client.SendAsync(updateRequest);
-
-        var body = await updateResponse.Content.ReadAsStringAsync();
+        var deleteResponse =
+            await _client.SendAsync(deleteRequest);
 
         Assert.Equal(
-            HttpStatusCode.OK,
-            updateResponse.StatusCode);
+            HttpStatusCode.NoContent,
+            deleteResponse.StatusCode);
     }
-    
+        
+    // - Creator non propriétaire -> 403 
     [Fact]
-    public async Task UpdatePost_WithAuthenticatedUserWithCreatorRoleAndIsNotOwner_ReturnsForbidden()
+    public async Task DeletePost_WithAuthenticatedUserWithCreatorRoleAndIsNotOwner_ReturnsForbidden()
     {
-        var identityIdTrueOwner = $"creator-{Guid.NewGuid()}";
-        var identityIdFalseOwner = $"creator-{Guid.NewGuid()}";
+        var identityIdOwner = $"creator-{Guid.NewGuid()}";
+        var identityIdNotOwner = $"creator-{Guid.NewGuid()}";
 
         await factory.CreateUserAsync(
-            identityId: identityIdTrueOwner,
+            identityId: identityIdOwner,
             roles: [UserRole.Creator]);
-        
+
         await factory.CreateUserAsync(
-            identityId: identityIdFalseOwner,
+            identityId: identityIdNotOwner,
             roles: [UserRole.Creator]);
 
         using var request = new HttpRequestMessage(
@@ -93,7 +88,7 @@ public sealed class UpdatePostTests(
 
         request.Headers.Add(
             "X-Test-Identity",
-            identityIdTrueOwner);
+            identityIdOwner);
 
         var response =
             await _client.SendAsync(request);
@@ -101,40 +96,34 @@ public sealed class UpdatePostTests(
         Assert.Equal(
             HttpStatusCode.Created,
             response.StatusCode);
-        
+
         var createdPost =
             await response.Content
                 .ReadFromJsonAsync<CreatePostResponse>();
 
-        // Update the post as the owner
-        using var updateRequest = new HttpRequestMessage(
-            HttpMethod.Put,
-            $"/blog/posts/{createdPost.Id}")
-        {
-            Content = JsonContent.Create(
-                UpdateValidRequest()
-            )
-        };
+        // Delete the post as the owner
+        using var deleteRequest = new HttpRequestMessage(
+            HttpMethod.Delete,
+            $"/blog/posts/{createdPost.Id}");
 
-        updateRequest.Headers.Add(
+        deleteRequest.Headers.Add(
             "X-Test-Identity",
-            identityIdFalseOwner);
+            identityIdNotOwner);
 
-        var updateResponse =
-            await _client.SendAsync(updateRequest);
-
-        var body = await updateResponse.Content.ReadAsStringAsync();
+        var deleteResponse =
+            await _client.SendAsync(deleteRequest);
 
         Assert.Equal(
             HttpStatusCode.Forbidden,
-            updateResponse.StatusCode);
+            deleteResponse.StatusCode);
     }
-    
+
+    // - Admin -> 204
     [Fact]
-    public async Task UpdatePost_WithAuthenticatedUserWithAdminRole_ReturnsForbiden()
+    public async Task DeletePost_WithAuthenticatedUserWithAdminRole_ReturnsNoContent()
     {
         var identityIdCreator = $"creator-{Guid.NewGuid()}";
-        var identityIdAdmin = $"admin-{Guid.NewGuid()}";
+        var identityIdAdmin = $"creator-{Guid.NewGuid()}";
 
         await factory.CreateUserAsync(
             identityId: identityIdCreator,
@@ -162,39 +151,32 @@ public sealed class UpdatePostTests(
         Assert.Equal(
             HttpStatusCode.Created,
             response.StatusCode);
-        
+
         var createdPost =
             await response.Content
                 .ReadFromJsonAsync<CreatePostResponse>();
 
-        // Update the post as the owner
-        using var updateRequest = new HttpRequestMessage(
-            HttpMethod.Put,
-            $"/blog/posts/{createdPost.Id}")
-        {
-            Content = JsonContent.Create(
-                UpdateValidRequest()
-            )
-        };
+        // Delete the post as the owner
+        using var deleteRequest = new HttpRequestMessage(
+            HttpMethod.Delete,
+            $"/blog/posts/{createdPost.Id}");
 
-        updateRequest.Headers.Add(
+        deleteRequest.Headers.Add(
             "X-Test-Identity",
             identityIdAdmin);
 
-        var updateResponse =
-            await _client.SendAsync(updateRequest);
-
-        var body = await updateResponse.Content.ReadAsStringAsync();
+        var deleteResponse =
+            await _client.SendAsync(deleteRequest);
 
         Assert.Equal(
-            HttpStatusCode.Forbidden,
-            updateResponse.StatusCode);
+            HttpStatusCode.NoContent,
+            deleteResponse.StatusCode);
     }
-    
-    private sealed record CreatePostResponse(
-    Guid Id,
-    string Title);
 
+    private sealed record CreatePostResponse(
+        Guid Id,
+        string Title);
+    
     private static object StartTags()
     {
         return new[]

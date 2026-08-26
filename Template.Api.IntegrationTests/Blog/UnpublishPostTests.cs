@@ -1,20 +1,21 @@
 using System.Net;
 using System.Net.Http.Json;
 using Template.Api.IntegrationTests.Infrastructure;
-using Template.Modules.Blog.Domain;
 using Template.Modules.Users.Contracts;
 
 namespace Template.Api.IntegrationTests.Blog;
 
-public sealed class UpdatePostTests(
+public class UnpublishPostTests
+(
     ApiFactory factory)
     : IClassFixture<ApiFactory>
 {
     private readonly HttpClient _client =
         factory.CreateClient();
 
+    // - Creator propriétaire -> 204
     [Fact]
-    public async Task UpdatePost_WithAuthenticatedUserWithCreatorRoleAndIsOwner_ReturnsOk()
+    public async Task UnpublishPost_WithAuthenticatedUserWithCreatorRoleAndIsOwner_ReturnsOk()
     {
         var identityId = $"creator-{Guid.NewGuid()}";
 
@@ -40,47 +41,42 @@ public sealed class UpdatePostTests(
         Assert.Equal(
             HttpStatusCode.Created,
             response.StatusCode);
-        
+
         var createdPost =
             await response.Content
                 .ReadFromJsonAsync<CreatePostResponse>();
 
-        // Update the post as the owner
-        using var updateRequest = new HttpRequestMessage(
-            HttpMethod.Put,
-            $"/blog/posts/{createdPost.Id}")
-        {
-            Content = JsonContent.Create(
-                UpdateValidRequest()
-            )
-        };
+        // Unpublish the post as the owner
+        using var unpublishRequest = new HttpRequestMessage(
+            HttpMethod.Post,
+            $"/blog/posts/{createdPost.Id}/unpublish");
 
-        updateRequest.Headers.Add(
+        unpublishRequest.Headers.Add(
             "X-Test-Identity",
             identityId);
 
-        var updateResponse =
-            await _client.SendAsync(updateRequest);
-
-        var body = await updateResponse.Content.ReadAsStringAsync();
+        var unpublishResponse =
+            await _client.SendAsync(unpublishRequest);
 
         Assert.Equal(
             HttpStatusCode.OK,
-            updateResponse.StatusCode);
+            unpublishResponse.StatusCode);
+        
     }
-    
+
+    // - Creator non propriétaire -> 403
     [Fact]
-    public async Task UpdatePost_WithAuthenticatedUserWithCreatorRoleAndIsNotOwner_ReturnsForbidden()
+    public async Task UnpublishPost_WithAuthenticatedUserWithCreatorRoleAndIsNotOwner_ReturnsForbidden()
     {
-        var identityIdTrueOwner = $"creator-{Guid.NewGuid()}";
-        var identityIdFalseOwner = $"creator-{Guid.NewGuid()}";
+        var identityIdCreator = $"creator-{Guid.NewGuid()}";
+        var identityIdNotOwner = $"creator-{Guid.NewGuid()}";
 
         await factory.CreateUserAsync(
-            identityId: identityIdTrueOwner,
+            identityId: identityIdCreator,
             roles: [UserRole.Creator]);
-        
+
         await factory.CreateUserAsync(
-            identityId: identityIdFalseOwner,
+            identityId: identityIdNotOwner,
             roles: [UserRole.Creator]);
 
         using var request = new HttpRequestMessage(
@@ -93,7 +89,7 @@ public sealed class UpdatePostTests(
 
         request.Headers.Add(
             "X-Test-Identity",
-            identityIdTrueOwner);
+            identityIdCreator);
 
         var response =
             await _client.SendAsync(request);
@@ -101,40 +97,35 @@ public sealed class UpdatePostTests(
         Assert.Equal(
             HttpStatusCode.Created,
             response.StatusCode);
-        
+
         var createdPost =
             await response.Content
                 .ReadFromJsonAsync<CreatePostResponse>();
 
-        // Update the post as the owner
-        using var updateRequest = new HttpRequestMessage(
-            HttpMethod.Put,
-            $"/blog/posts/{createdPost.Id}")
-        {
-            Content = JsonContent.Create(
-                UpdateValidRequest()
-            )
-        };
+        // Unpublish the post as the owner
+        using var unpublishRequest = new HttpRequestMessage(
+            HttpMethod.Post,
+            $"/blog/posts/{createdPost.Id}/unpublish");
 
-        updateRequest.Headers.Add(
+        unpublishRequest.Headers.Add(
             "X-Test-Identity",
-            identityIdFalseOwner);
+            identityIdNotOwner);
 
-        var updateResponse =
-            await _client.SendAsync(updateRequest);
-
-        var body = await updateResponse.Content.ReadAsStringAsync();
+        var unpublishResponse =
+            await _client.SendAsync(unpublishRequest);  
 
         Assert.Equal(
             HttpStatusCode.Forbidden,
-            updateResponse.StatusCode);
+            unpublishResponse.StatusCode);
     }
     
+    // - Admin -> 204
     [Fact]
-    public async Task UpdatePost_WithAuthenticatedUserWithAdminRole_ReturnsForbiden()
+    public async Task PublishPost_WithAuthenticatedUserWithAdminRoleAndIsNotOwner_ReturnsOk()
     {
-        var identityIdCreator = $"creator-{Guid.NewGuid()}";
         var identityIdAdmin = $"admin-{Guid.NewGuid()}";
+        var identityIdCreator = $"creator-{Guid.NewGuid()}";
+        
 
         await factory.CreateUserAsync(
             identityId: identityIdCreator,
@@ -162,55 +153,39 @@ public sealed class UpdatePostTests(
         Assert.Equal(
             HttpStatusCode.Created,
             response.StatusCode);
-        
+
         var createdPost =
             await response.Content
                 .ReadFromJsonAsync<CreatePostResponse>();
 
-        // Update the post as the owner
-        using var updateRequest = new HttpRequestMessage(
-            HttpMethod.Put,
-            $"/blog/posts/{createdPost.Id}")
-        {
-            Content = JsonContent.Create(
-                UpdateValidRequest()
-            )
-        };
+        // Publish the post as the admin
+        using var unpublishRequest = new HttpRequestMessage(
+            HttpMethod.Post,
+            $"/blog/posts/{createdPost.Id}/unpublish");
 
-        updateRequest.Headers.Add(
+        unpublishRequest.Headers.Add(
             "X-Test-Identity",
             identityIdAdmin);
 
-        var updateResponse =
-            await _client.SendAsync(updateRequest);
 
-        var body = await updateResponse.Content.ReadAsStringAsync();
+        var unpublishResponse =
+            await _client.SendAsync(unpublishRequest);
 
         Assert.Equal(
-            HttpStatusCode.Forbidden,
-            updateResponse.StatusCode);
+            HttpStatusCode.OK,
+            unpublishResponse.StatusCode);
     }
     
     private sealed record CreatePostResponse(
-    Guid Id,
-    string Title);
-
+        Guid Id,
+        string Title);
+    
     private static object StartTags()
     {
         return new[]
         {
             "dotnet",
             "testcontainers"
-        };
-    }
-    
-    private static object NewTags()
-    {
-        return new[]
-        {
-            "dotnet",
-            "testcontainers",
-            "updated"
         };
     }
     
@@ -227,18 +202,5 @@ public sealed class UpdatePostTests(
             tags = StartTags()
         };
     }
-
-    private static object UpdateValidRequest()
-    {
-        return new
-        {
-            title = "Updated Test post",
-            description = "Updated Test description",
-            content = "# Updated Test",
-            startDate = "2026-08-25",
-            heroImage = (string?)null,
-            readingTimeMinutes = 10,
-            tags = NewTags()
-        };
-    }
+    
 }

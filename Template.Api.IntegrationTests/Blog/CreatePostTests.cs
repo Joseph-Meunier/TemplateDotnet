@@ -18,7 +18,7 @@ public sealed class CreatePostTests(
         var request = CreateValidRequest();
 
         var response = await _client.PostAsJsonAsync(
-            "/blog/post",
+            "/blog/posts",
             request);
 
         Assert.Equal(
@@ -36,7 +36,7 @@ public sealed class CreatePostTests(
 
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
-            "/blog/post")
+            "/blog/posts")
         {
             Content = JsonContent.Create(
                 CreateValidRequest())
@@ -65,7 +65,7 @@ public sealed class CreatePostTests(
 
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
-            "/blog/post")
+            "/blog/posts")
         {
             Content = JsonContent.Create(
                 CreateValidRequest())
@@ -90,7 +90,7 @@ public sealed class CreatePostTests(
 
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
-            "/blog/post")
+            "/blog/posts")
         {
             Content = JsonContent.Create(
                 CreateValidRequest())
