@@ -5,6 +5,8 @@ using Template.Api.Authentication;
 using Template.Api.Errors;
 using Template.Modules.Users;
 using Template.Modules.Blog;
+using Template.Modules.Blog.Bootstrap;
+using Template.Modules.Users.Bootstrap;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -73,10 +75,32 @@ app.UseExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Bootstrap the admin user if we dont have one yet. This is useful for development and testing purposes.
+using (var scope = app.Services.CreateScope())
+{
+    var bootstrapAdmin =
+        scope.ServiceProvider
+            .GetRequiredService<BootstrapAdminService>();
+
+    await bootstrapAdmin.RunAsync();
+}
+
 if (app.Environment.IsDevelopment())
 {
+    // Seed development data for the blog module
+    using var scope = app.Services.CreateScope();
+
+    var blogSeeder =
+        scope.ServiceProvider
+            .GetRequiredService<DevelopmentBlogSeeder>();
+
+    await blogSeeder.RunAsync();
+    
+    
+    // Enable OpenAPI/Swagger in development environment
     app.MapOpenApi();
 
+    // Document the API with Scalar API Reference
     app.MapScalarApiReference(options =>
     {
         options

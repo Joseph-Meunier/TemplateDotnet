@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Template.Modules.Users.Bootstrap;
 using Template.Modules.Users.Contracts;
 using Template.Modules.Users.Data;
 
@@ -24,6 +25,14 @@ public static class DependencyInjection
                         "users");
                 });
         });
+        
+        // Bootstrap admin (if enabled) will run on application startup and assign the Admin role to the user with the specified IdentityId.
+        services
+            .AddOptions<BootstrapAdminOptions>()
+            .Bind(
+                configuration.GetSection(
+                    BootstrapAdminOptions.SectionName));
+        services.AddScoped<BootstrapAdminService>();
         
         services.AddScoped<IUserReader, UserReader>();
 
