@@ -28,10 +28,12 @@ public static class DependencyInjection
         services.AddValidatorsFromAssemblyContaining<ModuleMarker>();
 
         services.AddScoped<Features.CreatePost.Handler>();
+        services.AddScoped<Features.DeletePost.Handler>();
         services.AddScoped<Features.GetPost.Handler>();
-        services.AddScoped<Features.PublishPost.Handler>();
-        services.AddScoped<Features.UpdatePost.Handler>();
         services.AddScoped<Features.GetPublishedPosts.Handler>();
+        services.AddScoped<Features.PublishPost.Handler>();
+        services.AddScoped<Features.UnpublishPost.Handler>();
+        services.AddScoped<Features.UpdatePost.Handler>();
         services.AddScoped<BlogAuthorizationService>();
 
         return services;

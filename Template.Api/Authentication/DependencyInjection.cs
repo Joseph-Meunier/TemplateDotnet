@@ -40,6 +40,8 @@ public static class DependencyInjection
                     authenticationOptions.Audience;
 
                 options.RequireHttpsMetadata = true;
+
+                options.MapInboundClaims = false;
             });
 
         services.AddAuthorization();
