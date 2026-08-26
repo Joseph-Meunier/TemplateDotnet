@@ -6,9 +6,6 @@ public sealed class Validator : AbstractValidator<Request>
 {
     public Validator()
     {
-        RuleFor(x => x.AuthorUserId)
-            .NotEmpty();
-
         RuleFor(x => x.Title)
             .NotEmpty()
             .MaximumLength(200);

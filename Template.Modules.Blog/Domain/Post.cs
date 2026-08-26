@@ -69,6 +69,18 @@ public sealed class Post
         UpdatedAt = DateTimeOffset.UtcNow;
     }
     
+    public void Unpublish()
+    {
+        if (!IsPublished)
+        {
+            return;
+        }
+
+        IsPublished = false;
+        PublishedAt = null;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+    
     public void Update(
         string title,
         string description,

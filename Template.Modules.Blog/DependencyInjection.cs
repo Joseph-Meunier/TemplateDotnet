@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Template.Modules.Blog.Authorization;
 using Template.Modules.Blog.Data;
 
 namespace Template.Modules.Blog;
@@ -31,6 +32,7 @@ public static class DependencyInjection
         services.AddScoped<Features.PublishPost.Handler>();
         services.AddScoped<Features.UpdatePost.Handler>();
         services.AddScoped<Features.GetPublishedPosts.Handler>();
+        services.AddScoped<BlogAuthorizationService>();
 
         return services;
     }

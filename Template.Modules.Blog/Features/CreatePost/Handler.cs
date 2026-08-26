@@ -1,28 +1,27 @@
 using Microsoft.EntityFrameworkCore;
+using Template.Modules.Blog.Authorization;
 using Template.Modules.Blog.Data;
 using Template.Modules.Blog.Domain;
-using Template.Modules.Users.Contracts;
 using Template.Shared.Errors;
 
 namespace Template.Modules.Blog.Features.CreatePost;
 
 public sealed class Handler(
     BlogDbContext dbContext,
-    IUserReader userReader)
+    BlogAuthorizationService authorizationService)
 {
     public async Task<Response> Handle(
         Request request,
         CancellationToken cancellationToken)
     {
-        var authorExists = await userReader.ExistsAsync(
-            request.AuthorUserId,
+        var author = await authorizationService.RequireCreatorAsync(
             cancellationToken);
 
-        if (!authorExists)
+        if (author is null)
         {
             throw new NotFoundException(
-                "users.not_found",
-                "The requested author does not exist.");
+                "users.current_user_not_found",
+                "The authenticated user has no application profile.");
         }
 
         var normalizedTagNames = request.Tags
@@ -35,17 +34,17 @@ public sealed class Handler(
             .Where(x => normalizedTagNames.Contains(x.Name))
             .ToListAsync(cancellationToken);
 
-        var existingTagNames = existingTags
+        var existingNames = existingTags
             .Select(x => x.Name)
             .ToHashSet();
 
         var newTags = normalizedTagNames
-            .Where(x => !existingTagNames.Contains(x))
+            .Where(x => !existingNames.Contains(x))
             .Select(x => new Tag(x))
             .ToList();
-
+        
         var post = new Post(
-            request.AuthorUserId,
+            author.Id,
             request.Title,
             request.Description,
             request.Content,
@@ -65,8 +64,7 @@ public sealed class Handler(
 
         dbContext.Posts.Add(post);
 
-        await dbContext.SaveChangesAsync(
-            cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return new Response(
             post.Id,
