@@ -15,4 +15,21 @@ internal sealed class UserReader(
             x => x.Id == userId,
             cancellationToken);
     }
+
+    public Task<UserSummary?> GetByIdentityIdAsync(
+        string identityId,
+        CancellationToken cancellationToken)
+    {
+        return dbContext.Users
+            .AsNoTracking()
+            .Where(x => x.IdentityId == identityId)
+            .Select(x => new UserSummary(
+                x.Id,
+                x.Email,
+                x.DisplayName,
+                x.Roles
+                    .Select(r => r.Role)
+                    .ToArray()))
+            .SingleOrDefaultAsync(cancellationToken);
+    }
 }

@@ -27,5 +27,17 @@ public sealed class UserConfiguration
 
         builder.HasIndex(x => x.Email)
             .IsUnique();
+        
+        builder.Property(x => x.IdentityId)
+            .HasMaxLength(100)
+            .IsRequired();
+
+        builder.HasIndex(x => x.IdentityId)
+            .IsUnique();
+        
+        builder.HasMany(x => x.Roles)
+            .WithOne()
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
