@@ -4,14 +4,14 @@ using Microsoft.AspNetCore.Routing;
 using Template.Modules.Users.Contracts;
 using Template.Shared.Validation;
 
-namespace Template.Modules.Users.Features.AddUserRole;
+namespace Template.Modules.Users.Features.DeleteUserRole;
 
 public static class Endpoint
 {
     public static IEndpointRouteBuilder MapCreateUserEndpoint(
         this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapPost("/users/{id:guid}/roles/{role}", async (
+        endpoints.MapDelete("/users/{id:guid}/roles/{role}", async (
                 Guid id,
                 UserRole role,
                 Handler handler,

@@ -1,5 +1,8 @@
+using Microsoft.EntityFrameworkCore;
 using Template.Modules.Users.Authorization;
+using Template.Modules.Users.Contracts;
 using Template.Modules.Users.Data;
+using Template.Modules.Users.Domain;
 using Template.Shared.Auth;
 using Template.Shared.Errors;
 
@@ -10,24 +13,30 @@ public class Handler(
     ICurrentUser currentUser,
     UsersAuthorizationService authorizationService)
 {
-    public async Task Handle(
+        public async Task Handle(
         Guid id,
-        Request request,
+        UserRole role,
         CancellationToken cancellationToken)
     {
-        var user = await dbContext.Users.FindAsync(id, cancellationToken);
+        await authorizationService.RequireAdminAsync(
+            cancellationToken);
 
-        if (user == null)
+        var user = await dbContext.Users
+            .Include(x => x.Roles)
+            .SingleOrDefaultAsync(
+                x => x.Id == id,
+                cancellationToken);
+
+        if (user is null)
         {
             throw new NotFoundException(
                 "users.not_found",
                 "The user was not found.");
         }
-        
-        await authorizationService.RequireAdminAsync(cancellationToken);
-        
-        user.AddRole(request.Role);
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        user.AddRole(role);
+
+        await dbContext.SaveChangesAsync(
+            cancellationToken);
     }
 }
