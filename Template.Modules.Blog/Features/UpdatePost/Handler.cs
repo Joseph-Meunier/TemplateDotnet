@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Template.Modules.Blog.Authorization;
 using Template.Modules.Blog.Data;
 using Template.Modules.Blog.Domain;
 using Template.Shared.Errors;
@@ -6,7 +7,8 @@ using Template.Shared.Errors;
 namespace Template.Modules.Blog.Features.UpdatePost;
 
 public sealed class Handler(
-    BlogDbContext dbContext)
+    BlogDbContext dbContext,
+    BlogAuthorizationService authorizationService)
 {
     public async Task<Response> Handle(
         Guid id,
@@ -25,6 +27,10 @@ public sealed class Handler(
                 "blog.post_not_found",
                 "The requested post does not exist.");
         }
+        
+        await authorizationService.RequireCanEditAsync(
+            post,
+            cancellationToken);
 
         post.Update(
             request.Title,
