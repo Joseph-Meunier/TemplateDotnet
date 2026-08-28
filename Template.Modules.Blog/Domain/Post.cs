@@ -1,3 +1,6 @@
+using Template.Modules.Blog.Events;
+using Template.Shared.Events;
+
 namespace Template.Modules.Blog.Domain;
 
 public sealed class Post
@@ -26,6 +29,21 @@ public sealed class Post
     
     public ICollection<Tag> Tags { get; private set; } = [];
 
+    private readonly List<IDomainEvent> _domainEvents = [];
+
+    public IReadOnlyCollection<IDomainEvent> DomainEvents
+        => _domainEvents.AsReadOnly();
+    
+    private void RaiseDomainEvent(IDomainEvent domainEvent)
+    {
+        _domainEvents.Add(domainEvent);
+    }
+
+    public void ClearDomainEvents()
+    {
+        _domainEvents.Clear();
+    }
+    
     private Post()
     {
     }
@@ -63,9 +81,21 @@ public sealed class Post
             return;
         }
 
+        var now = DateTimeOffset.UtcNow;
+        
         IsPublished = true;
         PublishedAt = publicationDate;
-        UpdatedAt = DateTimeOffset.UtcNow;
+        UpdatedAt = now;
+        RaiseDomainEvent
+        (
+            new PostPublishedDomainEvent
+            (
+                Id,
+                AuthorUserId,
+                now
+            )
+        );
+    
     }
     
     public void Unpublish()

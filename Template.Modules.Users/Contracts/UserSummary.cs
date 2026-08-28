@@ -1,4 +1,4 @@
-using Template.Modules.Users.Contracts;
+namespace Template.Modules.Users.Contracts;
 
 public sealed record UserSummary(
     Guid Id,

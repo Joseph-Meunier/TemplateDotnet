@@ -1,10 +1,12 @@
 using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 using Template.Api.Authentication;
+using Template.Api.Infrastructure.Messaging;
 using Template.Modules.Users;
 using Template.Modules.Blog;
 using Template.Modules.Blog.Bootstrap;
 using Template.Modules.Users.Bootstrap;
+using Template.Shared.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -54,6 +56,20 @@ builder.Services.AddTemplateAuthentication(
 
 builder.Services.AddAuthorization();
 
+
+// Add rabbitmq and outbox services
+builder.Services.Configure<RabbitMqOptions>(
+    builder.Configuration.GetSection(
+        RabbitMqOptions.SectionName));
+
+builder.Services.AddSingleton<RabbitMqConnection>();
+
+builder.Services.AddSingleton<IIntegrationEventPublisher,
+    RabbitMqIntegrationEventPublisher>();
+
+builder.Services.AddHostedService<OutboxWorker>();
+builder.Services.AddSingleton<RabbitMqTopologyInitializer>();
+
 // Add ProblemDetails middleware for standardized error responses
 builder.Services.AddProblemDetails();
 
@@ -65,6 +81,16 @@ builder.Services.AddUsersModule(builder.Configuration);
 builder.Services.AddBlogModule(builder.Configuration);
 
 var app = builder.Build();
+
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var topologyInitializer =
+        scope.ServiceProvider
+            .GetRequiredService<RabbitMqTopologyInitializer>();
+
+    await topologyInitializer.InitializeAsync(
+        CancellationToken.None);
+}
 
 // Use ProblemDetails middleware to handle exceptions and return standardized error responses
 app.UseExceptionHandler();

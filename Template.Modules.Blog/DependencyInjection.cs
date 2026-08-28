@@ -5,6 +5,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Template.Modules.Blog.Authorization;
 using Template.Modules.Blog.Bootstrap;
 using Template.Modules.Blog.Data;
+using Template.Modules.Blog.Data.Outbox;
+using Template.Modules.Blog.Messaging;
+using Template.Shared.Events;
 
 namespace Template.Modules.Blog;
 
@@ -37,6 +40,9 @@ public static class DependencyInjection
         services.AddScoped<Features.UpdatePost.Handler>();
         services.AddScoped<BlogAuthorizationService>();
         services.AddScoped<DevelopmentBlogSeeder>();
+        
+        services.AddScoped<IOutboxProcessor, BlogOutboxProcessor>();
+        services.AddSingleton<IMessageTopology, BlogMessageTopology>();
 
         return services;
     }
