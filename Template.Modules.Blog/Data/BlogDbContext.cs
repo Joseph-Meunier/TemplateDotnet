@@ -4,6 +4,7 @@ using Template.Modules.Blog.Data.Outbox;
 using Template.Modules.Blog.Domain;
 using Template.Modules.Blog.Events;
 using Template.Shared.Events;
+using Template.Modules.Blog.Data.Inbox;
 
 namespace Template.Modules.Blog.Data;
 
@@ -14,6 +15,7 @@ public sealed class BlogDbContext(
     public DbSet<Post> Posts => Set<Post>();
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+    public DbSet<InboxMessage> InboxMessages => Set<InboxMessage>();
 
     protected override void OnModelCreating(
         ModelBuilder modelBuilder)

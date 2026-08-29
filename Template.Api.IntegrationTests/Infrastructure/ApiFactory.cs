@@ -11,6 +11,7 @@ using Template.Modules.Blog.Data;
 using Template.Modules.Users.Contracts;
 using Template.Modules.Users.Data;
 using Template.Modules.Users.Domain;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Template.Api.IntegrationTests.Infrastructure;
 

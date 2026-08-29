@@ -21,10 +21,15 @@ public sealed class RabbitMqIntegrationEventPublisher(
         var connection =
             await rabbitMqConnection.GetConnectionAsync(
                 cancellationToken);
+        
+        var channelOptions = new CreateChannelOptions(
+            publisherConfirmationsEnabled: true,
+            publisherConfirmationTrackingEnabled: true);
 
         await using var channel =
             await connection.CreateChannelAsync(
-                cancellationToken: cancellationToken);
+                channelOptions,
+                cancellationToken);
 
         await channel.ExchangeDeclareAsync(
             exchange: _options.Exchange,

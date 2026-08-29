@@ -43,6 +43,7 @@ public static class DependencyInjection
         
         services.AddScoped<IOutboxProcessor, BlogOutboxProcessor>();
         services.AddSingleton<IMessageTopology, BlogMessageTopology>();
+        services.AddScoped<IIntegrationEventHandler, PostPublishedIntegrationEventHandler>();
 
         return services;
     }

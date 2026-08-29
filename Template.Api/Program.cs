@@ -1,11 +1,16 @@
+using System.Text.Json;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 using Template.Api.Authentication;
+using Template.Api.Infrastructure.Health;
 using Template.Api.Infrastructure.Messaging;
 using Template.Modules.Users;
 using Template.Modules.Blog;
 using Template.Modules.Blog.Bootstrap;
+using Template.Modules.Blog.Data;
 using Template.Modules.Users.Bootstrap;
+using Template.Modules.Users.Data;
 using Template.Shared.Events;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -67,8 +72,13 @@ builder.Services.AddSingleton<RabbitMqConnection>();
 builder.Services.AddSingleton<IIntegrationEventPublisher,
     RabbitMqIntegrationEventPublisher>();
 
-builder.Services.AddHostedService<OutboxWorker>();
 builder.Services.AddSingleton<RabbitMqTopologyInitializer>();
+
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Services.AddHostedService<OutboxWorker>();
+    builder.Services.AddHostedService<RabbitMqConsumerWorker>();
+}
 
 // Add ProblemDetails middleware for standardized error responses
 builder.Services.AddProblemDetails();
@@ -80,10 +90,25 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddUsersModule(builder.Configuration);
 builder.Services.AddBlogModule(builder.Configuration);
 
+builder.Services
+    .AddHealthChecks()
+    .AddDbContextCheck<UsersDbContext>(
+        name: "users-db",
+        tags: ["ready"])
+    .AddDbContextCheck<BlogDbContext>(
+        name: "blog-db",
+        tags: ["ready"])
+    .AddCheck<RabbitMqHealthCheck>(
+        name: "rabbitmq",
+        tags: ["ready"]);
+
 var app = builder.Build();
 
-await using (var scope = app.Services.CreateAsyncScope())
+// Initialize the RabbitMQ topology
+if (!app.Environment.IsEnvironment("Testing"))
 {
+    await using var scope = app.Services.CreateAsyncScope();
+
     var topologyInitializer =
         scope.ServiceProvider
             .GetRequiredService<RabbitMqTopologyInitializer>();
@@ -99,7 +124,7 @@ app.UseExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Bootstrap the admin user if we dont have one yet. This is useful for development and testing purposes.
+// Bootstrap the admin user if we don't have one yet. This is useful for development and testing purposes.
 if (!app.Environment.IsEnvironment("Testing"))
 {
     using var scope = app.Services.CreateScope();
@@ -149,6 +174,42 @@ if (app.Environment.IsDevelopment())
 // Map Modules endpoints
 app.MapUsersModule();
 app.MapBlogModule();
+
+app.MapHealthChecks(
+    "/health/live",
+    new HealthCheckOptions
+    {
+        Predicate = _ => false
+    });
+
+
+app.MapHealthChecks(
+    "/health/ready",
+    new HealthCheckOptions
+    {
+        Predicate = check =>
+            check.Tags.Contains("ready"),
+
+        ResponseWriter = async (context, report) =>
+        {
+            context.Response.ContentType = "application/json";
+
+            var response = new
+            {
+                status = report.Status.ToString(),
+
+                checks = report.Entries.Select(entry => new
+                {
+                    name = entry.Key,
+                    status = entry.Value.Status.ToString(),
+                    description = entry.Value.Description
+                })
+            };
+
+            await context.Response.WriteAsync(
+                JsonSerializer.Serialize(response));
+        }
+    });
 
 app.Run();
 

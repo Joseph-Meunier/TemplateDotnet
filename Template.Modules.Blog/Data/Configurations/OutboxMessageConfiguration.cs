@@ -28,5 +28,15 @@ internal sealed class OutboxMessageConfiguration
         builder.Property(x => x.ProcessedAt);
 
         builder.HasIndex(x => x.ProcessedAt);
+        
+        builder.Property(x => x.RetryCount)
+            .IsRequired();
+
+        builder.Property(x => x.LastError)
+            .HasMaxLength(2000);
+
+        builder.Property(x => x.NextAttemptAt);
+        
+        builder.Property(x => x.FailedAt);
     }
 }

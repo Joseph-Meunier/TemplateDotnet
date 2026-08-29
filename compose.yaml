@@ -4,7 +4,7 @@
     image: template-api
     build:
       context: .
-      dockerfile: src/Template.Api/Dockerfile
+      dockerfile: Template.Api/Dockerfile
       
     environment:
       ConnectionStrings__UsersDatabase: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}

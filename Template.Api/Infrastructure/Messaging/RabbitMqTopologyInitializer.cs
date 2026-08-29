@@ -14,6 +14,8 @@ public sealed class RabbitMqTopologyInitializer(
     public async Task InitializeAsync(
         CancellationToken cancellationToken)
     {
+        const string deadLetterExchange = "template.dead-letter";
+
         var rabbitConnection =
             await connection.GetConnectionAsync(
                 cancellationToken);
@@ -29,15 +31,42 @@ public sealed class RabbitMqTopologyInitializer(
             autoDelete: false,
             cancellationToken: cancellationToken);
 
+        await channel.ExchangeDeclareAsync(
+            exchange: deadLetterExchange,
+            type: ExchangeType.Direct,
+            durable: true,
+            autoDelete: false,
+            cancellationToken: cancellationToken);
+
         foreach (var topology in topologies)
         {
             foreach (var subscription in topology.Subscriptions)
             {
                 await channel.QueueDeclareAsync(
+                    queue: subscription.DeadLetterQueueName,
+                    durable: true,
+                    exclusive: false,
+                    autoDelete: false,
+                    cancellationToken: cancellationToken);
+
+                await channel.QueueBindAsync(
+                    queue: subscription.DeadLetterQueueName,
+                    exchange: deadLetterExchange,
+                    routingKey: subscription.QueueName,
+                    cancellationToken: cancellationToken);
+
+                var arguments = new Dictionary<string, object?>
+                {
+                    ["x-dead-letter-exchange"] = deadLetterExchange,
+                    ["x-dead-letter-routing-key"] = subscription.QueueName
+                };
+
+                await channel.QueueDeclareAsync(
                     queue: subscription.QueueName,
                     durable: true,
                     exclusive: false,
                     autoDelete: false,
+                    arguments: arguments,
                     cancellationToken: cancellationToken);
 
                 await channel.QueueBindAsync(

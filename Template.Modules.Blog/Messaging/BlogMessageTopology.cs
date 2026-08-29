@@ -10,6 +10,7 @@ internal sealed class BlogMessageTopology
     [
         new(
             "template.blog.post-published",
-            typeof(PostPublishedIntegrationEvent).FullName!)
+            typeof(PostPublishedIntegrationEvent).FullName!,
+            "template.blog.post-published.dlq")
     ];
 }
