@@ -1,6 +1,11 @@
 using System.Text.Json;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.OpenApi;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Scalar.AspNetCore;
 using Template.Api.Authentication;
 using Template.Api.Infrastructure.Health;
@@ -90,6 +95,7 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddUsersModule(builder.Configuration);
 builder.Services.AddBlogModule(builder.Configuration);
 
+// Add health checks for database and RabbitMQ
 builder.Services
     .AddHealthChecks()
     .AddDbContextCheck<UsersDbContext>(
@@ -102,7 +108,70 @@ builder.Services
         name: "rabbitmq",
         tags: ["ready"]);
 
+// Add OpenTelemetry tracing
+builder.Services
+    .AddOpenTelemetry()
+    .ConfigureResource(resource =>
+        resource.AddService(
+            builder.Environment.ApplicationName))
+    .WithTracing(tracing =>
+    {
+        tracing.AddAspNetCoreInstrumentation();
+    });
+
+// Add rate limiting middleware to limit the number of requests per minute
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter(
+        policyName: "fixed",
+        limiterOptions =>
+        {
+            limiterOptions.PermitLimit = 100;
+            limiterOptions.Window = TimeSpan.FromMinutes(1);
+            limiterOptions.QueueLimit = 0;
+            limiterOptions.QueueProcessingOrder =
+                QueueProcessingOrder.OldestFirst;
+        });
+});
+
+var allowedOrigins =
+    builder.Configuration
+        .GetSection("Cors:AllowedOrigins")
+        .Get<string[]>()
+    ?? [];
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(
+        "default",
+        policy =>
+        {
+            policy
+                .WithOrigins(allowedOrigins)
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+});
+
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor |
+        ForwardedHeaders.XForwardedProto;
+});
+
 var app = builder.Build();
+
+app.UseForwardedHeaders();
+
+// Use ProblemDetails middleware to handle exceptions and return standardized error responses
+app.UseExceptionHandler();
+
+app.UseRateLimiter();
+
+app.UseCors("default");
+
 
 // Initialize the RabbitMQ topology
 if (!app.Environment.IsEnvironment("Testing"))
@@ -117,8 +186,6 @@ if (!app.Environment.IsEnvironment("Testing"))
         CancellationToken.None);
 }
 
-// Use ProblemDetails middleware to handle exceptions and return standardized error responses
-app.UseExceptionHandler();
 
 // Authentication and Authorization middleware
 app.UseAuthentication();

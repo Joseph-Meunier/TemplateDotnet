@@ -14,6 +14,11 @@
       RabbitMq__Username: ${RABBITMQ_USER}
       RabbitMq__Password: ${RABBITMQ_PASSWORD}
       RabbitMq__Exchange: template.events
+      Authentication__Authority: ${AUTHENTICATION_AUTHORITY}
+      Authentication__Audience: ${AUTHENTICATION_AUDIENCE}
+      Cors__AllowedOrigins__0: ${CORS_ALLOWED_ORIGIN_0}
+      BootstrapAdmin__Enabled: ${BOOTSTRAP_ADMIN_ENABLED}
+      BootstrapAdmin__IdentityId: ${BOOTSTRAP_ADMIN_IDENTITY_ID}
 
     depends_on:
       - postgres
