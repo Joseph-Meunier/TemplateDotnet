@@ -4,6 +4,8 @@ obj/
 riderModule.iml
 /_ReSharper.Caches/
 
+Template.Api/appsettings.Local.json
+
 .env
 
 # Created by https://www.toptal.com/developers/gitignore/api/macos,rider,visualstudiocode,dotnetcore

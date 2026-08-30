@@ -3,6 +3,7 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -19,6 +20,11 @@ using Template.Modules.Users.Data;
 using Template.Shared.Events;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Configuration.AddJsonFile(
+    "appsettings.Local.json",
+    optional: true,
+    reloadOnChange: true);
 
 builder.Services.AddOpenApi(options =>
 {
@@ -277,6 +283,19 @@ app.MapHealthChecks(
                 JsonSerializer.Serialize(response));
         }
     });
+
+
+// Apply database migrations on startup for development and production environments.
+if (!app.Environment.IsEnvironment("Testing"))
+{
+    using var scope = app.Services.CreateScope();
+
+    var usersDb = scope.ServiceProvider.GetRequiredService<UsersDbContext>();
+    await usersDb.Database.MigrateAsync();
+
+    var blogDb = scope.ServiceProvider.GetRequiredService<BlogDbContext>();
+    await blogDb.Database.MigrateAsync();
+}
 
 app.Run();
 
