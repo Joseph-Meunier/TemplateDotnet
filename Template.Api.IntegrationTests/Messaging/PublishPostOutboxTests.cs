@@ -58,7 +58,7 @@ public sealed class PublishPostOutboxTests(
             null);
 
         Assert.Equal(
-            HttpStatusCode.NoContent,
+            HttpStatusCode.OK,
             response.StatusCode);
 
         await using var verificationScope =

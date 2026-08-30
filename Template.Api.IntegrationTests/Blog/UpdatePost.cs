@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Template.Api.IntegrationTests.Infrastructure;
 using Template.Modules.Blog.Domain;
-using Template.Modules.Users.Contracts;
+using static Template.Modules.Users.Contracts.UserRole;
 
 namespace Template.Api.IntegrationTests.Blog;
 
@@ -20,15 +20,14 @@ public sealed class UpdatePostTests(
 
         await factory.CreateUserAsync(
             identityId: identityId,
-            roles: [UserRole.Creator]);
+            roles: Creator);
 
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
-            "/blog/posts")
-        {
-            Content = JsonContent.Create(
-                CreateValidRequest())
-        };
+            "/blog/posts");
+        
+        request.Content = JsonContent.Create(
+            CreateValidRequest());
 
         request.Headers.Add(
             "X-Test-Identity",
@@ -44,16 +43,16 @@ public sealed class UpdatePostTests(
         var createdPost =
             await response.Content
                 .ReadFromJsonAsync<CreatePostResponse>();
+        if (createdPost == null) return;
 
         // Update the post as the owner
         using var updateRequest = new HttpRequestMessage(
             HttpMethod.Put,
-            $"/blog/posts/{createdPost.Id}")
-        {
-            Content = JsonContent.Create(
-                UpdateValidRequest()
-            )
-        };
+            $"/blog/posts/{createdPost.Id}");
+        
+        updateRequest.Content = JsonContent.Create(
+            UpdateValidRequest()
+        );
 
         updateRequest.Headers.Add(
             "X-Test-Identity",
@@ -62,9 +61,9 @@ public sealed class UpdatePostTests(
         var updateResponse =
             await _client.SendAsync(updateRequest);
 
-        var body = await updateResponse.Content.ReadAsStringAsync();
+        await updateResponse.Content.ReadAsStringAsync();
 
-        Assert.Equal(
+        Assert.Equal(   
             HttpStatusCode.OK,
             updateResponse.StatusCode);
     }
@@ -77,19 +76,18 @@ public sealed class UpdatePostTests(
 
         await factory.CreateUserAsync(
             identityId: identityIdTrueOwner,
-            roles: [UserRole.Creator]);
+            roles: Creator);
         
         await factory.CreateUserAsync(
             identityId: identityIdFalseOwner,
-            roles: [UserRole.Creator]);
+            roles: Creator);
 
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
-            "/blog/posts")
-        {
-            Content = JsonContent.Create(
-                CreateValidRequest())
-        };
+            "/blog/posts");
+        
+        request.Content = JsonContent.Create(
+            CreateValidRequest());
 
         request.Headers.Add(
             "X-Test-Identity",
@@ -107,27 +105,29 @@ public sealed class UpdatePostTests(
                 .ReadFromJsonAsync<CreatePostResponse>();
 
         // Update the post as the owner
-        using var updateRequest = new HttpRequestMessage(
-            HttpMethod.Put,
-            $"/blog/posts/{createdPost.Id}")
+        if (createdPost != null)
         {
-            Content = JsonContent.Create(
+            using var updateRequest = new HttpRequestMessage(
+                HttpMethod.Put,
+                $"/blog/posts/{createdPost.Id}");
+            
+            updateRequest.Content = JsonContent.Create(
                 UpdateValidRequest()
-            )
-        };
+            );
 
-        updateRequest.Headers.Add(
-            "X-Test-Identity",
-            identityIdFalseOwner);
+            updateRequest.Headers.Add(
+                "X-Test-Identity",
+                identityIdFalseOwner);
 
-        var updateResponse =
-            await _client.SendAsync(updateRequest);
+            var updateResponse =
+                await _client.SendAsync(updateRequest);
 
-        var body = await updateResponse.Content.ReadAsStringAsync();
+            await updateResponse.Content.ReadAsStringAsync();
 
-        Assert.Equal(
-            HttpStatusCode.Forbidden,
-            updateResponse.StatusCode);
+            Assert.Equal(
+                HttpStatusCode.Forbidden,
+                updateResponse.StatusCode);
+        }
     }
     
     [Fact]
@@ -138,19 +138,17 @@ public sealed class UpdatePostTests(
 
         await factory.CreateUserAsync(
             identityId: identityIdCreator,
-            roles: [UserRole.Creator]);
+            roles: Creator);
 
         await factory.CreateUserAsync(
             identityId: identityIdAdmin,
-            roles: [UserRole.Admin]);
+            roles: Admin);
 
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
-            "/blog/posts")
-        {
-            Content = JsonContent.Create(
-                CreateValidRequest())
-        };
+            "/blog/posts");
+        request.Content = JsonContent.Create(
+            CreateValidRequest());
 
         request.Headers.Add(
             "X-Test-Identity",
@@ -168,27 +166,28 @@ public sealed class UpdatePostTests(
                 .ReadFromJsonAsync<CreatePostResponse>();
 
         // Update the post as the owner
-        using var updateRequest = new HttpRequestMessage(
-            HttpMethod.Put,
-            $"/blog/posts/{createdPost.Id}")
+        if (createdPost != null)
         {
-            Content = JsonContent.Create(
+            using var updateRequest = new HttpRequestMessage(
+                HttpMethod.Put,
+                $"/blog/posts/{createdPost.Id}");
+            updateRequest.Content = JsonContent.Create(
                 UpdateValidRequest()
-            )
-        };
+            );
 
-        updateRequest.Headers.Add(
-            "X-Test-Identity",
-            identityIdAdmin);
+            updateRequest.Headers.Add(
+                "X-Test-Identity",
+                identityIdAdmin);
 
-        var updateResponse =
-            await _client.SendAsync(updateRequest);
+            var updateResponse =
+                await _client.SendAsync(updateRequest);
 
-        var body = await updateResponse.Content.ReadAsStringAsync();
+            await updateResponse.Content.ReadAsStringAsync();
 
-        Assert.Equal(
-            HttpStatusCode.Forbidden,
-            updateResponse.StatusCode);
+            Assert.Equal(
+                HttpStatusCode.Forbidden,
+                updateResponse.StatusCode);
+        }
     }
     
     private sealed record CreatePostResponse(

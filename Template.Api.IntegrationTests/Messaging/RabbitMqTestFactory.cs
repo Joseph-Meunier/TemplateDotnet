@@ -11,6 +11,7 @@ public sealed class RabbitMqTestFactory
             .WithPassword("template")
             .Build();
 
+    
     public string Host => _rabbitMq.Hostname;
 
     public int Port => _rabbitMq.GetMappedPublicPort(5672);

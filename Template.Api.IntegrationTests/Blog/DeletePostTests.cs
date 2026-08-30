@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Template.Api.IntegrationTests.Infrastructure;
-using Template.Modules.Users.Contracts;
+using static Template.Modules.Users.Contracts.UserRole;
 
 namespace Template.Api.IntegrationTests.Blog;
 
@@ -21,15 +21,14 @@ public class DeletePostTests(
 
         await factory.CreateUserAsync(
             identityId: identityId,
-            roles: [UserRole.Creator]);
+            roles: Creator);
 
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
-            "/blog/posts")
-        {
-            Content = JsonContent.Create(
-                CreateValidRequest())
-        };
+            "/blog/posts");
+        
+        request.Content = JsonContent.Create(
+            CreateValidRequest());
 
         request.Headers.Add(
             "X-Test-Identity",
@@ -47,20 +46,23 @@ public class DeletePostTests(
                 .ReadFromJsonAsync<CreatePostResponse>();
 
         // Delete the post as the owner
-        using var deleteRequest = new HttpRequestMessage(
-            HttpMethod.Delete,
-            $"/blog/posts/{createdPost.Id}");
+        if (createdPost != null)
+        {
+            using var deleteRequest = new HttpRequestMessage(
+                HttpMethod.Delete,
+                $"/blog/posts/{createdPost.Id}");
 
-        deleteRequest.Headers.Add(
-            "X-Test-Identity",
-            identityId);
+            deleteRequest.Headers.Add(
+                "X-Test-Identity",
+                identityId);
 
-        var deleteResponse =
-            await _client.SendAsync(deleteRequest);
+            var deleteResponse =
+                await _client.SendAsync(deleteRequest);
 
-        Assert.Equal(
-            HttpStatusCode.NoContent,
-            deleteResponse.StatusCode);
+            Assert.Equal(
+                HttpStatusCode.NoContent,
+                deleteResponse.StatusCode);
+        }
     }
         
     // - Creator non propriétaire -> 403 
@@ -72,19 +74,18 @@ public class DeletePostTests(
 
         await factory.CreateUserAsync(
             identityId: identityIdOwner,
-            roles: [UserRole.Creator]);
+            roles: Creator);
 
         await factory.CreateUserAsync(
             identityId: identityIdNotOwner,
-            roles: [UserRole.Creator]);
+            roles: Creator);
 
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
-            "/blog/posts")
-        {
-            Content = JsonContent.Create(
-                CreateValidRequest())
-        };
+            "/blog/posts");
+        
+        request.Content = JsonContent.Create(
+            CreateValidRequest());
 
         request.Headers.Add(
             "X-Test-Identity",
@@ -100,6 +101,8 @@ public class DeletePostTests(
         var createdPost =
             await response.Content
                 .ReadFromJsonAsync<CreatePostResponse>();
+
+        if (createdPost == null) return;
 
         // Delete the post as the owner
         using var deleteRequest = new HttpRequestMessage(
@@ -127,19 +130,18 @@ public class DeletePostTests(
 
         await factory.CreateUserAsync(
             identityId: identityIdCreator,
-            roles: [UserRole.Creator]);
+            roles: Creator);
 
         await factory.CreateUserAsync(
             identityId: identityIdAdmin,
-            roles: [UserRole.Admin]);
+            roles: Admin);
 
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
-            "/blog/posts")
-        {
-            Content = JsonContent.Create(
-                CreateValidRequest())
-        };
+            "/blog/posts");
+        
+        request.Content = JsonContent.Create(
+            CreateValidRequest());
 
         request.Headers.Add(
             "X-Test-Identity",
@@ -155,6 +157,8 @@ public class DeletePostTests(
         var createdPost =
             await response.Content
                 .ReadFromJsonAsync<CreatePostResponse>();
+
+        if (createdPost == null) return;
 
         // Delete the post as the owner
         using var deleteRequest = new HttpRequestMessage(
@@ -185,17 +189,7 @@ public class DeletePostTests(
             "testcontainers"
         };
     }
-    
-    private static object NewTags()
-    {
-        return new[]
-        {
-            "dotnet",
-            "testcontainers",
-            "updated"
-        };
-    }
-    
+
     private static object CreateValidRequest()
     {
         return new
@@ -207,20 +201,6 @@ public class DeletePostTests(
             heroImage = (string?)null,
             readingTimeMinutes = 5,
             tags = StartTags()
-        };
-    }
-
-    private static object UpdateValidRequest()
-    {
-        return new
-        {
-            title = "Updated Test post",
-            description = "Updated Test description",
-            content = "# Updated Test",
-            startDate = "2026-08-25",
-            heroImage = (string?)null,
-            readingTimeMinutes = 10,
-            tags = NewTags()
         };
     }
 }

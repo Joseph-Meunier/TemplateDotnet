@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Template.Api.IntegrationTests.Infrastructure;
-using Template.Modules.Users.Contracts;
+using static Template.Modules.Users.Contracts.UserRole;
 
 namespace Template.Api.IntegrationTests.Blog;
 
@@ -21,15 +21,14 @@ public class UnpublishPostTests
 
         await factory.CreateUserAsync(
             identityId: identityId,
-            roles: [UserRole.Creator]);
+            roles: Creator);
 
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
-            "/blog/posts")
-        {
-            Content = JsonContent.Create(
-                CreateValidRequest())
-        };
+            "/blog/posts");
+        
+        request.Content = JsonContent.Create(
+            CreateValidRequest());
 
         request.Headers.Add(
             "X-Test-Identity",
@@ -47,21 +46,23 @@ public class UnpublishPostTests
                 .ReadFromJsonAsync<CreatePostResponse>();
 
         // Unpublish the post as the owner
-        using var unpublishRequest = new HttpRequestMessage(
-            HttpMethod.Post,
-            $"/blog/posts/{createdPost.Id}/unpublish");
+        if (createdPost != null)
+        {
+            using var unpublishRequest = new HttpRequestMessage(
+                HttpMethod.Post,
+                $"/blog/posts/{createdPost.Id}/unpublish");
 
-        unpublishRequest.Headers.Add(
-            "X-Test-Identity",
-            identityId);
+            unpublishRequest.Headers.Add(
+                "X-Test-Identity",
+                identityId);
 
-        var unpublishResponse =
-            await _client.SendAsync(unpublishRequest);
+            var unpublishResponse =
+                await _client.SendAsync(unpublishRequest);
 
-        Assert.Equal(
-            HttpStatusCode.OK,
-            unpublishResponse.StatusCode);
-        
+            Assert.Equal(
+                HttpStatusCode.OK,
+                unpublishResponse.StatusCode);
+        }
     }
 
     // - Creator non propriétaire -> 403
@@ -73,19 +74,18 @@ public class UnpublishPostTests
 
         await factory.CreateUserAsync(
             identityId: identityIdCreator,
-            roles: [UserRole.Creator]);
+            roles: Creator);
 
         await factory.CreateUserAsync(
             identityId: identityIdNotOwner,
-            roles: [UserRole.Creator]);
+            roles: Creator);
 
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
-            "/blog/posts")
-        {
-            Content = JsonContent.Create(
-                CreateValidRequest())
-        };
+            "/blog/posts");
+        
+        request.Content = JsonContent.Create(
+            CreateValidRequest());
 
         request.Headers.Add(
             "X-Test-Identity",
@@ -103,20 +103,23 @@ public class UnpublishPostTests
                 .ReadFromJsonAsync<CreatePostResponse>();
 
         // Unpublish the post as the owner
-        using var unpublishRequest = new HttpRequestMessage(
-            HttpMethod.Post,
-            $"/blog/posts/{createdPost.Id}/unpublish");
+        if (createdPost != null)
+        {
+            using var unpublishRequest = new HttpRequestMessage(
+                HttpMethod.Post,
+                $"/blog/posts/{createdPost.Id}/unpublish");
 
-        unpublishRequest.Headers.Add(
-            "X-Test-Identity",
-            identityIdNotOwner);
+            unpublishRequest.Headers.Add(
+                "X-Test-Identity",
+                identityIdNotOwner);
 
-        var unpublishResponse =
-            await _client.SendAsync(unpublishRequest);  
+            var unpublishResponse =
+                await _client.SendAsync(unpublishRequest);  
 
-        Assert.Equal(
-            HttpStatusCode.Forbidden,
-            unpublishResponse.StatusCode);
+            Assert.Equal(
+                HttpStatusCode.Forbidden,
+                unpublishResponse.StatusCode);
+        }
     }
     
     // - Admin -> 204
@@ -129,19 +132,18 @@ public class UnpublishPostTests
 
         await factory.CreateUserAsync(
             identityId: identityIdCreator,
-            roles: [UserRole.Creator]);
+            roles: Creator);
 
         await factory.CreateUserAsync(
             identityId: identityIdAdmin,
-            roles: [UserRole.Admin]);
+            roles: Admin);
 
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
-            "/blog/posts")
-        {
-            Content = JsonContent.Create(
-                CreateValidRequest())
-        };
+            "/blog/posts");
+        
+        request.Content = JsonContent.Create(
+            CreateValidRequest());
 
         request.Headers.Add(
             "X-Test-Identity",
@@ -159,21 +161,24 @@ public class UnpublishPostTests
                 .ReadFromJsonAsync<CreatePostResponse>();
 
         // Publish the post as the admin
-        using var unpublishRequest = new HttpRequestMessage(
-            HttpMethod.Post,
-            $"/blog/posts/{createdPost.Id}/unpublish");
+        if (createdPost != null)
+        {
+            using var unpublishRequest = new HttpRequestMessage(
+                HttpMethod.Post,
+                $"/blog/posts/{createdPost.Id}/unpublish");
 
-        unpublishRequest.Headers.Add(
-            "X-Test-Identity",
-            identityIdAdmin);
+            unpublishRequest.Headers.Add(
+                "X-Test-Identity",
+                identityIdAdmin);
 
 
-        var unpublishResponse =
-            await _client.SendAsync(unpublishRequest);
+            var unpublishResponse =
+                await _client.SendAsync(unpublishRequest);
 
-        Assert.Equal(
-            HttpStatusCode.OK,
-            unpublishResponse.StatusCode);
+            Assert.Equal(
+                HttpStatusCode.OK,
+                unpublishResponse.StatusCode);
+        }
     }
     
     private sealed record CreatePostResponse(

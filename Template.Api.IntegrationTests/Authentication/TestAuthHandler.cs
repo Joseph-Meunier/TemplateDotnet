@@ -9,7 +9,7 @@ namespace Template.Api.IntegrationTests.Authentication;
 public sealed class TestAuthHandler
     : AuthenticationHandler<AuthenticationSchemeOptions>
 {
-    public const string Scheme = "Test";
+    public new const string Scheme = "Test";
 
     public TestAuthHandler(
         IOptionsMonitor<AuthenticationSchemeOptions> options,
@@ -18,7 +18,7 @@ public sealed class TestAuthHandler
         : base(options, logger, encoder)
     {
     }
-
+    
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
         var identityId =

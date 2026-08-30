@@ -20,8 +20,7 @@ public sealed class ApiFactory
         IAsyncLifetime
 {
     private readonly PostgreSqlContainer _postgres =
-        new PostgreSqlBuilder()
-            .WithImage("postgres:17")
+        new PostgreSqlBuilder("postgres:17")
             .WithDatabase("template_tests")
             .WithUsername("postgres")
             .WithPassword("postgres")

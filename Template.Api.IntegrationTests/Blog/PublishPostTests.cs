@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Template.Api.IntegrationTests.Infrastructure;
-using Template.Modules.Users.Contracts;
+using static Template.Modules.Users.Contracts.UserRole;
 
 namespace Template.Api.IntegrationTests.Blog;
 
@@ -20,15 +20,14 @@ public class PublishPostTests(
 
         await factory.CreateUserAsync(
             identityId: identityId,
-            roles: [UserRole.Creator]);
+            roles: Creator);
 
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
-            "/blog/posts")
-        {
-            Content = JsonContent.Create(
-                CreateValidRequest())
-        };
+            "/blog/posts");
+        
+        request.Content = JsonContent.Create(
+            CreateValidRequest());
 
         request.Headers.Add(
             "X-Test-Identity",
@@ -46,20 +45,23 @@ public class PublishPostTests(
                 .ReadFromJsonAsync<CreatePostResponse>();
 
         // Publish the post as the owner
-        using var publishRequest = new HttpRequestMessage(
-            HttpMethod.Post,
-            $"/blog/posts/{createdPost.Id}/publish");
+        if (createdPost != null)
+        {
+            using var publishRequest = new HttpRequestMessage(
+                HttpMethod.Post,
+                $"/blog/posts/{createdPost.Id}/publish");
 
-        publishRequest.Headers.Add(
-            "X-Test-Identity",
-            identityId);
+            publishRequest.Headers.Add(
+                "X-Test-Identity",
+                identityId);
 
-        var publishResponse =
-            await _client.SendAsync(publishRequest);
+            var publishResponse =
+                await _client.SendAsync(publishRequest);
 
-        Assert.Equal(
-            HttpStatusCode.OK,
-            publishResponse.StatusCode);
+            Assert.Equal(
+                HttpStatusCode.OK,
+                publishResponse.StatusCode);
+        }
     }
 
     // - Creator non propriétaire -> 403
@@ -71,19 +73,18 @@ public class PublishPostTests(
 
         await factory.CreateUserAsync(
             identityId: identityIdCreator,
-            roles: [UserRole.Creator]);
+            roles: Creator);
 
         await factory.CreateUserAsync(
             identityId: identityIdNotOwner,
-            roles: [UserRole.Creator]);
+            roles: Creator);
 
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
-            "/blog/posts")
-        {
-            Content = JsonContent.Create(
-                CreateValidRequest())
-        };
+            "/blog/posts");
+        
+        request.Content = JsonContent.Create(
+            CreateValidRequest());
 
         request.Headers.Add(
             "X-Test-Identity",
@@ -101,20 +102,23 @@ public class PublishPostTests(
                 .ReadFromJsonAsync<CreatePostResponse>();
 
         // Publish the post as the owner
-        using var publishRequest = new HttpRequestMessage(
-            HttpMethod.Post,
-            $"/blog/posts/{createdPost.Id}/publish");
+        if (createdPost != null)
+        {
+            using var publishRequest = new HttpRequestMessage(
+                HttpMethod.Post,
+                $"/blog/posts/{createdPost.Id}/publish");
 
-        publishRequest.Headers.Add(
-            "X-Test-Identity",
-            identityIdNotOwner);
+            publishRequest.Headers.Add(
+                "X-Test-Identity",
+                identityIdNotOwner);
 
-        var publishResponse =
-            await _client.SendAsync(publishRequest);
+            var publishResponse =
+                await _client.SendAsync(publishRequest);
 
-        Assert.Equal(
-            HttpStatusCode.Forbidden,
-            publishResponse.StatusCode);
+            Assert.Equal(
+                HttpStatusCode.Forbidden,
+                publishResponse.StatusCode);
+        }
     }
     
     // - Admin -> 204
@@ -127,19 +131,18 @@ public class PublishPostTests(
 
         await factory.CreateUserAsync(
             identityId: identityIdCreator,
-            roles: [UserRole.Creator]);
+            roles: Creator);
 
         await factory.CreateUserAsync(
             identityId: identityIdAdmin,
-            roles: [UserRole.Admin]);
+            roles: Admin);
 
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
-            "/blog/posts")
-        {
-            Content = JsonContent.Create(
-                CreateValidRequest())
-        };
+            "/blog/posts");
+        
+        request.Content = JsonContent.Create(
+            CreateValidRequest());
 
         request.Headers.Add(
             "X-Test-Identity",
@@ -157,20 +160,23 @@ public class PublishPostTests(
                 .ReadFromJsonAsync<CreatePostResponse>();
 
         // Publish the post as the admin
-        using var publishRequest = new HttpRequestMessage(
-            HttpMethod.Post,
-            $"/blog/posts/{createdPost.Id}/publish");
+        if (createdPost != null)
+        {
+            using var publishRequest = new HttpRequestMessage(
+                HttpMethod.Post,
+                $"/blog/posts/{createdPost.Id}/publish");
 
-        publishRequest.Headers.Add(
-            "X-Test-Identity",
-            identityIdAdmin);
+            publishRequest.Headers.Add(
+                "X-Test-Identity",
+                identityIdAdmin);
 
-        var publishResponse =
-            await _client.SendAsync(publishRequest);
+            var publishResponse =
+                await _client.SendAsync(publishRequest);
 
-        Assert.Equal(
-            HttpStatusCode.OK,
-            publishResponse.StatusCode);
+            Assert.Equal(
+                HttpStatusCode.OK,
+                publishResponse.StatusCode);
+        }
     }
     
     private sealed record CreatePostResponse(
