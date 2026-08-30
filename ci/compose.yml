@@ -11,6 +11,9 @@ services:
     environment:
       TESTCONTAINERS_HOST_OVERRIDE: host.docker.internal
 
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
     command: >
       sh -c "
         dotnet restore &&

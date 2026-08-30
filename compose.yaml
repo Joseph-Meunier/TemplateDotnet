@@ -1,53 +1,77 @@
 ﻿services:
-
   template-api:
-    image: template-api
+    image: ${API_IMAGE:-template-api}
+
     build:
       context: .
       dockerfile: Template.Api/Dockerfile
+
     ports:
-      - "8080:8080"
-      
+      - "${API_PORT:-8080}:8080"
+
     environment:
-      ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__UsersDatabase: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       ConnectionStrings__BlogDatabase: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+
       RabbitMq__Host: rabbitmq
       RabbitMq__Port: 5672
       RabbitMq__Username: ${RABBITMQ_USER}
       RabbitMq__Password: ${RABBITMQ_PASSWORD}
       RabbitMq__Exchange: template.events
+
       Authentication__Authority: ${AUTHENTICATION_AUTHORITY}
       Authentication__Audience: ${AUTHENTICATION_AUDIENCE}
+
       Cors__AllowedOrigins__0: ${CORS_ALLOWED_ORIGIN_0}
+
       BootstrapAdmin__Enabled: ${BOOTSTRAP_ADMIN_ENABLED:-false}
-      BootstrapAdmin__IdentityId: ${BOOTSTRAP_ADMIN_IDENTITY_ID}
+      BootstrapAdmin__IdentityId: ${BOOTSTRAP_ADMIN_IDENTITY_ID:-}
 
     depends_on:
-      - postgres
-      - rabbitmq
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
   postgres:
     image: postgres:${POSTGRES_VERSION:-17}
+
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
+
     volumes:
       - postgres_data:/var/lib/postgresql/data
-  
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   rabbitmq:
     image: rabbitmq:${RABBITMQ_VERSION:-4}-management
+
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+
     ports:
-      - "${RABBITMQ_PORT}:5672"
-      - "${RABBITMQ_MANAGEMENT_PORT}:15672"
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
   postgres_data:
