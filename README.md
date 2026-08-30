@@ -1,4 +1,4 @@
-# ASP.NET Core SaaS Template
+# ASP.NET Core SaaS Template V1
 
 Template de backend SaaS basé sur **ASP.NET Core** et **.NET 10**. Il fournit une base réutilisable pour démarrer rapidement une application moderne, modulaire et prête à être déployée.
 
