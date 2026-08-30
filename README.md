@@ -171,6 +171,295 @@ Features/
 
 Une fonctionnalité ne contient que les fichiers dont elle a réellement besoin.
 
+## Ajouter un nouveau module
+
+Chaque module métier est isolé dans son propre projet.
+
+```text
+Acme.Modules.Catalog/
+├── Contracts/
+├── Data/
+├── Domain/
+├── Features/
+└── Migrations/
+```
+
+### 1. Créer le projet
+
+Depuis la racine de la solution :
+
+```bash
+dotnet new classlib -n Acme.Modules.Catalog
+dotnet sln add Acme.Modules.Catalog/Acme.Modules.Catalog.csproj
+dotnet add Acme.Modules.Catalog reference Acme.Shared
+```
+
+Si l'API doit enregistrer ou exposer le module, ajoutez également sa référence :
+
+```bash
+dotnet add Acme.Api reference Acme.Modules.Catalog
+```
+
+### 2. Ajouter le `DbContext` du module
+
+```csharp
+public class CatalogDbContext(
+    DbContextOptions<CatalogDbContext> options)
+    : DbContext(options)
+{
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.HasDefaultSchema("catalog");
+
+        base.OnModelCreating(modelBuilder);
+    }
+}
+```
+
+Chaque module possède son propre `DbContext` et son propre schéma PostgreSQL. Ne créez pas de clé étrangère EF Core entre deux modules.
+
+Lorsqu'un module a besoin de données d'un autre module, utilisez un contrat public :
+
+```text
+Catalog
+   │
+   └── IUserReader
+           │
+           └── Users
+```
+
+### 3. Enregistrer le module
+
+Ajoutez le `DbContext`, les handlers et les éventuels services du module à la configuration de l'application.
+
+```csharp
+builder.Services.AddDbContext<CatalogDbContext>(options =>
+{
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("CatalogDatabase"));
+});
+```
+
+Ajoutez la chaîne de connexion correspondante :
+
+```json
+{
+  "ConnectionStrings": {
+    "CatalogDatabase": "Host=localhost;Port=5432;Database=acme;Username=postgres;Password=change-me"
+  }
+}
+```
+
+Et, dans Docker Compose :
+
+```yaml
+ConnectionStrings__CatalogDatabase: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+```
+
+### 4. Créer la migration initiale
+
+Une fois le modèle du module prêt, créez sa première migration. Consultez la section [Créer et appliquer une migration EF Core](#créer-et-appliquer-une-migration-ef-core).
+
+## Ajouter une nouvelle feature
+
+Le template utilise une organisation Vertical Slice : chaque fonctionnalité métier est regroupée dans son propre dossier.
+
+```text
+Features/
+└── CreateProduct/
+    ├── Endpoint.cs
+    ├── Handler.cs
+    ├── Request.cs
+    ├── Response.cs
+    └── Validator.cs
+```
+
+Tous les fichiers ne sont pas obligatoires. Une query simple peut, par exemple, ne contenir que :
+
+```text
+GetProduct/
+├── Endpoint.cs
+├── Handler.cs
+└── Response.cs
+```
+
+### Command
+
+Une command modifie l'état de l'application, par exemple : `CreateProduct`, `UpdateProduct`, `DeleteProduct`, `PublishPost` ou `AddUserRole`.
+
+Le handler contient la logique applicative de la feature :
+
+```csharp
+public class Handler(CatalogDbContext dbContext)
+{
+    public async Task<Guid> Handle(
+        Request request,
+        CancellationToken cancellationToken)
+    {
+        var product = new Product(
+            Guid.NewGuid(),
+            request.Name);
+
+        dbContext.Products.Add(product);
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return product.Id;
+    }
+}
+```
+
+### Query
+
+Une query lit des données sans modifier l'état. Utilisez autant que possible `AsNoTracking()` et projetez directement vers le modèle de réponse :
+
+```csharp
+var product = await dbContext.Products
+    .AsNoTracking()
+    .Where(x => x.Id == id)
+    .Select(x => new Response(
+        x.Id,
+        x.Name))
+    .SingleOrDefaultAsync(cancellationToken);
+```
+
+Cela évite de charger inutilement les entités complètes.
+
+### Endpoint
+
+L'endpoint reste léger :
+
+```text
+HTTP → validation → handler → réponse HTTP
+```
+
+```csharp
+public static class Endpoint
+{
+    public static void MapCreateProduct(this IEndpointRouteBuilder app)
+    {
+        app.MapPost("/catalog/products", async (
+            Request request,
+            Handler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var id = await handler.Handle(request, cancellationToken);
+
+            return Results.Created(
+                $"/catalog/products/{id}",
+                new Response(id));
+        });
+    }
+}
+```
+
+Évitez de placer la logique métier directement dans l'endpoint.
+
+### Validation
+
+Une feature qui reçoit une requête peut utiliser FluentValidation :
+
+```csharp
+public class Validator : AbstractValidator<Request>
+{
+    public Validator()
+    {
+        RuleFor(x => x.Name)
+            .NotEmpty()
+            .MaximumLength(200);
+    }
+}
+```
+
+Le filtre de validation global du template retourne ensuite une réponse HTTP adaptée.
+
+### Communication entre modules
+
+Une feature ne doit pas accéder directement au `DbContext` d'un autre module.
+
+```text
+À éviter :  Catalog Handler → UsersDbContext
+À préférer : Catalog Handler → IUserReader → Users module
+```
+
+Le module propriétaire des données expose le contrat public nécessaire.
+
+## Créer et appliquer une migration EF Core
+
+Chaque module possède ses propres migrations, car chaque module possède son propre `DbContext`.
+
+```text
+Acme.Modules.Users/
+└── Migrations/
+
+Acme.Modules.Blog/
+└── Migrations/
+```
+
+### Créer une migration
+
+Depuis la racine du projet, pour le module Users :
+
+```bash
+dotnet ef migrations add AddSomething \
+  --project Acme.Modules.Users \
+  --startup-project Acme.Api \
+  --context UsersDbContext
+```
+
+Pour le module Blog :
+
+```bash
+dotnet ef migrations add AddSomething \
+  --project Acme.Modules.Blog \
+  --startup-project Acme.Api \
+  --context BlogDbContext
+```
+
+- `--project` indique le projet qui contient le `DbContext` et les migrations ;
+- `--startup-project` indique le projet utilisé pour charger la configuration et l'injection de dépendances ;
+- `--context` est nécessaire lorsque l'application contient plusieurs `DbContext`.
+
+### Appliquer les migrations en développement
+
+Pour Users :
+
+```bash
+dotnet ef database update \
+  --project Acme.Modules.Users \
+  --startup-project Acme.Api \
+  --context UsersDbContext
+```
+
+Pour Blog :
+
+```bash
+dotnet ef database update \
+  --project Acme.Modules.Blog \
+  --startup-project Acme.Api \
+  --context BlogDbContext
+```
+
+### Production
+
+En environnement `Production`, l'application applique automatiquement les migrations au démarrage :
+
+```text
+container start → Users migrations → Blog migrations → application start
+```
+
+Cette stratégie convient à un déploiement simple avec une seule instance de l'API. Avec plusieurs instances susceptibles de démarrer simultanément, préférez une étape de migration dédiée avant le déploiement.
+
+### Tests
+
+Les tests d'intégration utilisent une base PostgreSQL créée par Testcontainers :
+
+```text
+PostgreSQL container → Users migrations → Blog migrations → tests
+```
+
+Cela vérifie que toutes les migrations peuvent être appliquées sur une base vierge. Il n'est donc pas nécessaire d'exécuter `dotnet ef migrations list` dans la CI.
+
 ## Tests
 
 Lancez tous les tests avec :
@@ -223,4 +512,3 @@ Le template privilégie :
 - une infrastructure réaliste ;
 - l'absence de dépendance à MediatR ;
 - l'absence de repository générique et de couches inutiles.
-
