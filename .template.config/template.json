@@ -22,14 +22,15 @@
     {
       "modifiers": [
         {
-          "exclude": [
+            "exclude": [
             ".git/**",
             ".idea/**",
             "**/bin/**",
             "**/obj/**",
             ".DS_Store",
-            ".env"
-          ]
+            ".env",
+            "**/appsettings.Local.json"
+            ]
         }
       ]
     }
