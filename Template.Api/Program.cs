@@ -21,10 +21,12 @@ using Template.Shared.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Configuration.AddJsonFile(
-    "appsettings.Local.json",
-    optional: true,
-    reloadOnChange: true);
+builder.Configuration
+    .AddJsonFile(
+        "appsettings.Local.json",
+        optional: true,
+        reloadOnChange: true)
+    .AddEnvironmentVariables();
 
 builder.Services.AddOpenApi(options =>
 {
