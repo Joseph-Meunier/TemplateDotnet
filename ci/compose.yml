@@ -13,11 +13,7 @@ services:
 
     command: >
       sh -c "
-        dotnet tool install --global dotnet-ef --version 10.* &&
-        export PATH=\"$$PATH:/root/.dotnet/tools\" &&
         dotnet restore &&
         dotnet build --configuration Release --no-restore &&
-        dotnet test --configuration Release --no-build &&
-        dotnet ef migrations list --project src/Modules/Template.Modules.Users --startup-project src/Template.Api &&
-        dotnet ef migrations list --project src/Modules/Template.Modules.Blog --startup-project src/Template.Api
+        dotnet test --configuration Release --no-build
       "

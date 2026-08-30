@@ -5,8 +5,11 @@
     build:
       context: .
       dockerfile: Template.Api/Dockerfile
+    ports:
+      - "8080:8080"
       
     environment:
+      ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__UsersDatabase: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       ConnectionStrings__BlogDatabase: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       RabbitMq__Host: rabbitmq
@@ -17,7 +20,7 @@
       Authentication__Authority: ${AUTHENTICATION_AUTHORITY}
       Authentication__Audience: ${AUTHENTICATION_AUDIENCE}
       Cors__AllowedOrigins__0: ${CORS_ALLOWED_ORIGIN_0}
-      BootstrapAdmin__Enabled: ${BOOTSTRAP_ADMIN_ENABLED}
+      BootstrapAdmin__Enabled: ${BOOTSTRAP_ADMIN_ENABLED:-false}
       BootstrapAdmin__IdentityId: ${BOOTSTRAP_ADMIN_IDENTITY_ID}
 
     depends_on:
