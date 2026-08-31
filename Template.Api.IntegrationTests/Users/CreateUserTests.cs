@@ -30,6 +30,21 @@ public sealed class CreateUserTests(
     }
 
     [Fact]
+    public async Task RegisterUser_WithoutAuthentication_ReturnsCreated()
+    {
+        var response = await _client.PostAsJsonAsync(
+            "/auth/register",
+            new
+            {
+                email = $"registered-{Guid.NewGuid()}@example.com",
+                displayName = "Registered user",
+                password = "A-secure-password-123"
+            });
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [Fact]
     public async Task CreateUser_WithValidRequest_ReturnsCreated()
     {
         var identityId = $"identity-{Guid.NewGuid()}";

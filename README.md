@@ -142,6 +142,20 @@ Exemple de configuration :
 
 En production, fournissez ces valeurs via des variables d'environnement.
 
+### Inscription avec Keycloak
+
+`POST /auth/register` est public et crée d'abord l'identité Keycloak, puis le profil applicatif dans `users.users`. Le backend utilise le compte de service du client `joseph-platform-createuser` (rôle `realm-management/manage-users`) ; aucun secret n'est exposé au frontend.
+
+Configurez les valeurs suivantes côté serveur ou dans votre fichier `.env` Docker :
+
+```text
+KEYCLOAK_IDENTITY_AUTHORITY=https://keycloak-joseph.duckdns.org/realms/joseph.platform
+KEYCLOAK_IDENTITY_ADMIN_BASE_URL=https://keycloak-joseph.duckdns.org
+KEYCLOAK_IDENTITY_REALM=joseph.platform
+KEYCLOAK_IDENTITY_CLIENT_ID=joseph-platform-createuser
+KEYCLOAK_IDENTITY_CLIENT_SECRET=<secret-du-client>
+```
+
 ## Messagerie
 
 RabbitMQ est utilisé pour les événements d'intégration. Le template comprend :

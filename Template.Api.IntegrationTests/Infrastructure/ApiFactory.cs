@@ -92,6 +92,18 @@ public sealed class ApiFactory
                     ["Authentication:Audience"] =
                         "template-api",
 
+                    ["Keycloak:CreateUserClient:Authority"] =
+                        "https://test.invalid",
+
+                    ["Keycloak:CreateUserClient:Realm"] =
+                        "template",
+
+                    ["Keycloak:CreateUserClient:ClientId"] =
+                        "joseph-platform-createuser",
+
+                    ["Keycloak:CreateUserClient:ClientSecret"] =
+                        "test-secret",
+
                     ["ConnectionStrings:UsersDatabase"] =
                         _postgres.GetConnectionString(),
 
@@ -102,6 +114,9 @@ public sealed class ApiFactory
 
         builder.ConfigureTestServices(services =>
         {
+            services.RemoveAll<IIdentityProvider>();
+            services.AddSingleton<IIdentityProvider, TestIdentityProvider>();
+
             services
                 .AddAuthentication(options =>
                 {

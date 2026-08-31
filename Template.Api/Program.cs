@@ -11,11 +11,13 @@ using Scalar.AspNetCore;
 using Template.Api.Authentication;
 using Template.Api.Infrastructure.Health;
 using Template.Api.Infrastructure.Messaging;
+using Template.Api.Identity;
 using Template.Modules.Users;
 using Template.Modules.Blog;
 using Template.Modules.Blog.Bootstrap;
 using Template.Modules.Blog.Data;
 using Template.Modules.Users.Bootstrap;
+using Template.Modules.Users.Contracts;
 using Template.Modules.Users.Data;
 using Template.Shared.Events;
 
@@ -71,6 +73,24 @@ builder.Services.AddOpenApi(options =>
 
 builder.Services.AddTemplateAuthentication(
     builder.Configuration);
+
+builder.Services
+    .AddOptions<KeycloakIdentityProviderOptions>()
+    .Bind(builder.Configuration.GetSection(KeycloakIdentityProviderOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services.AddHttpClient<IIdentityProvider, KeycloakIdentityProvider>(
+    (_, client) =>
+    {
+        var settings = builder.Configuration
+            .GetSection(KeycloakIdentityProviderOptions.SectionName)
+            .Get<KeycloakIdentityProviderOptions>()
+            ?? throw new InvalidOperationException(
+                "Keycloak create-user client configuration is missing.");
+
+        client.BaseAddress = new Uri(settings.Authority.TrimEnd('/') + "/");
+    });
 
 builder.Services.AddAuthorization();
 

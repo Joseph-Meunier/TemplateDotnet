@@ -42,6 +42,7 @@ public static class DependencyInjection
         services.AddValidatorsFromAssemblyContaining<ModuleMarker>();
 
         services.AddScoped<Features.CreateUser.Handler>();
+        services.AddScoped<Features.RegisterUser.Handler>();
         services.AddScoped<Features.GetUser.Handler>();
         services.AddScoped<Features.AddUserRole.Handler>();
         services.AddScoped<Features.DeleteUserRole.Handler>();
